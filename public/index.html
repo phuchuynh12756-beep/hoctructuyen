@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lớp học trực tuyến + Giáo viên AI</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#f4f6fb;color:#1c2333}
+header{display:flex;gap:8px;align-items:center;padding:10px 16px;background:#fff;border-bottom:1px solid #e1e5ef;flex-wrap:wrap}
+header h1{font-size:18px;margin:0 12px 0 0}
+.tab{border:0;background:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:15px}.tab.on{background:#4f46e5;color:#fff}
+main{max-width:1100px;margin:16px auto;padding:0 12px}section{display:none}section.on{display:block}
+button{cursor:pointer}.btn{background:#4f46e5;color:#fff;border:0;border-radius:8px;padding:9px 14px;font-size:14px}.btn.gray{background:#e5e7f0;color:#1c2333}.btn.red{background:#dc2626}
+input,select,textarea{padding:9px;border:1px solid #cfd5e3;border-radius:8px;font-size:14px} textarea{font-family:inherit}
+.card{background:var(--card,#fff);border-radius:12px;padding:16px;box-shadow:0 1px 3px #0001}.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.setting{display:flex;flex-direction:column;gap:5px}.setting label{font-weight:600;font-size:13px}.setting small{color:#6b7280}.theme-preview{height:80px;border-radius:12px;border:1px solid #d9deea;margin-top:8px}.danger-note{padding:10px;border-radius:9px;background:#fff7ed;color:#9a3412;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:12px}
+.tile{position:relative;background:#111;border-radius:10px;overflow:hidden;aspect-ratio:4/3}.tile video{width:100%;height:100%;object-fit:cover}
+.tile span{position:absolute;left:8px;bottom:6px;color:#fff;background:#0008;padding:2px 8px;border-radius:6px;font-size:12px}
+.chat{display:flex;flex-direction:column;height:100%;min-height:0}
+.msgs{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.m{max-width:88%;padding:9px 12px;border-radius:12px;line-height:1.5;font-size:14.5px;overflow-x:auto}
+.m.u{align-self:flex-end;background:#4f46e5;color:#fff}.m.a{align-self:flex-start;background:#eef0f8}.m img{max-width:200px;border-radius:8px;display:block;margin-bottom:6px}
+.m p{margin:4px 0}.bar{display:flex;gap:6px;padding:8px;border-top:1px solid #e1e5ef;align-items:center}.bar input[type=text],.bar textarea{flex:1;min-width:0}.bar textarea{font:inherit;min-height:42px;max-height:110px;resize:none;line-height:1.4}
+.prev{padding:0 8px}.prev img{height:50px;border-radius:6px}
+#aiMain{height:70vh}
+#bubble{position:fixed;right:18px;bottom:18px;width:58px;height:58px;border-radius:50%;border:0;background:#4f46e5;color:#fff;font-size:26px;box-shadow:0 4px 14px #0004;z-index:50}
+#pop{position:fixed;right:18px;bottom:86px;width:min(380px,calc(100vw - 36px));height:min(540px,70vh);background:#fff;border-radius:14px;box-shadow:0 8px 30px #0004;display:none;z-index:50;overflow:hidden}
+#pop.on{display:block}
+#camModal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:99}#camModal.on{display:flex}
+#camModal div{background:#fff;padding:14px;border-radius:12px;text-align:center}#camModal video{max-width:90vw;max-height:60vh;border-radius:8px}
+.q{margin:14px 0;padding:12px;border:1px solid #e1e5ef;border-radius:10px}.opt{display:block;padding:7px 10px;margin:4px 0;border-radius:8px;cursor:pointer;border:1px solid #e1e5ef}
+.opt.ok{background:#dcfce7;border-color:#16a34a}.opt.bad{background:#fee2e2;border-color:#dc2626}.ex{margin-top:8px;font-size:14px;color:#374151}
+
+/* Authentication form: ensure inputs remain real, focusable, and above the overlay. */
+.auth-overlay{position:fixed;inset:0;background:#f4f6fb;z-index:200;display:none;align-items:center;justify-content:center;pointer-events:auto}
+.auth-overlay.on{display:flex}
+.auth-card{width:min(380px,92vw);position:relative;z-index:201;pointer-events:auto}
+.auth-fields{display:flex;flex-direction:column;gap:8px}
+.auth-fields input{display:block;width:100%;min-height:40px;pointer-events:auto;user-select:text;-webkit-user-select:text;touch-action:auto}
+.auth-fields input:disabled{pointer-events:auto}
+.auth-fields input[type=password]{-webkit-text-security:disc}
+.auth-fields button,.auth-fields a{pointer-events:auto}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎓 Lớp học AI</h1>
+  <button class="tab on" data-t="room">Lớp học</button>
+  <button class="tab" data-t="teacher">Giáo viên AI</button>
+  <button class="tab" data-t="bank">Kho bài tự luyện & đề ôn</button>
+  <button class="tab" data-t="settings">⚙️ Cài đặt</button>
+  <span id="me" style="margin-left:auto;font-size:14px"></span>
+</header>
+<main>
+  <!-- LỚP HỌC -->
+  <section id="room" class="on">
+    <div class="card">
+      <div class="row" id="lobby">
+        <input id="name" placeholder="Tên của bạn" style="width:160px">
+        <button class="btn" id="create">➕ Tạo phòng mới</button>
+        <input id="code" placeholder="Mã phòng" style="width:130px;text-transform:uppercase">
+        <button class="btn gray" id="join">Vào phòng</button>
+      </div>
+      <div class="row" id="ctrl" style="display:none">
+        <b id="roomTag"></b>
+        <button class="btn gray" id="copy">📋 Sao chép link</button>
+        <button class="btn gray" id="mic">🎤 Mic: Bật</button>
+        <button class="btn gray" id="cam">📹 Camera: Bật</button>
+        <button class="btn gray" id="share">🖥️ Chia sẻ màn hình</button>
+        <button class="btn red" id="leave">Rời phòng</button>
+      </div>
+      <div id="grid"></div>
+      <p id="hint" style="color:#6b7280;font-size:14px">Tạo phòng, gửi mã (hoặc link) cho bạn học. Bong bóng 💬 góc phải để hỏi AI bất cứ lúc nào.</p>
+    </div>
+  </section>
+
+  <!-- GIÁO VIÊN AI -->
+  <section id="teacher"><div class="card" id="aiMain" style="padding:0"></div></section>
+
+  <!-- KHO ĐỀ -->
+  <section id="bank">
+    <div class="card">
+      <div class="row">
+        <select id="subj"></select><select id="exam"></select>
+        <button class="btn gray" id="reload">🔄 Tải lại đề</button>
+      </div>
+      <details id="genBox" style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">✨ AI tạo đề mới</summary>
+        <div class="row" style="margin-top:8px">
+          <input id="gSubj" placeholder="Môn (vd: Toán)" style="width:130px">
+          <input id="gTopic" placeholder="Chủ đề (vd: Phương trình bậc hai)" style="width:240px">
+          <input id="gCount" type="number" value="5" min="1" max="20" style="width:70px" title="Số câu">
+          <button class="btn" id="gen">Tạo & lưu vào kho</button>
+        </div><div id="gMsg" style="margin-top:6px;font-size:14px"></div>
+      </details>
+      <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">➕ Tự thêm đề vào kho</summary>
+        <p style="color:#6b7280;font-size:13px">Ai đã đăng nhập cũng có thể đóng góp đề. Dùng đúng mẫu JSON bên dưới.</p>
+        <div class="row"><input id="mSubj" placeholder="Môn, ví dụ: Toán" style="flex:1;min-width:180px"><input id="mTitle" placeholder="Tên đề" style="flex:2;min-width:220px"></div>
+        <textarea id="mJson" rows="12" style="width:100%;margin-top:8px" spellcheck="false">{
+  "questions": [
+    {"q":"2 + 2 = ?","options":["3","4","5","6"],"answer":1,"explain":"2 + 2 = 4."}
+  ]
+}</textarea>
+        <div class="row" style="margin-top:8px"><button class="btn" id="addExam">📚 Thêm vào kho</button><span id="mMsg" style="font-size:14px"></span></div>
+      </details>
+      <div id="quiz"></div>
+    </div>
+  </section>
+  <!-- CÀI ĐẶT -->
+  <section id="settings">
+    <div class="card">
+      <h2 style="margin-top:0">⚙️ Cài đặt cá nhân</h2>
+      <p style="color:#6b7280">Các thiết lập này được lưu riêng cho tài khoản của bạn. Phần tính cách/xưng hô sẽ được dùng khi gọi Gemini.</p>
+      <div class="settings-grid">
+        <div class="setting"><label for="setTeacherName">Tên giáo viên AI</label><input id="setTeacherName" maxlength="40" placeholder="Giáo viên AI"></div>
+        <div class="setting"><label for="setPersonality">Tính cách</label><select id="setPersonality"><option value="than-thien">Thân thiện, kiên nhẫn</option><option value="nghiem-tuc">Nghiêm túc, rõ ràng</option><option value="hai-huoc">Vui vẻ, hài hước vừa phải</option><option value="khich-le">Khích lệ, động viên</option><option value="goi-mo">Gợi mở, Socratic</option></select></div>
+        <div class="setting"><label for="setAddress">Cách xưng hô</label><select id="setAddress"><option value="co-thay-em">Cô/thầy – em</option><option value="minh-ban">Mình – bạn</option><option value="to-cac-ban">Tớ – các bạn</option><option value="custom">Tự nhiên, lịch sự</option></select></div>
+        <div class="setting"><label for="setLength">Độ dài câu trả lời</label><select id="setLength"><option value="ngan">Ngắn gọn</option><option value="vua">Vừa phải</option><option value="chi-tiet">Chi tiết</option></select></div>
+        <div class="setting"><label for="setStyle">Cách dạy</label><select id="setStyle"><option value="giai-thich">Giải thích bằng ví dụ</option><option value="tung-buoc">Từng bước</option><option value="goi-mo">Gợi mở trước khi đáp án</option><option value="luyen-tap">Giải thích + luyện tập</option></select></div>
+        <div class="setting"><label for="setTheme">Nền giao diện</label><select id="setTheme"><option value="light">Sáng</option><option value="dark">Tối</option><option value="mint">Xanh dịu</option><option value="sunset">Cam ấm</option><option value="custom">Màu tự chọn</option></select></div>
+        <div class="setting"><label for="setBg">Màu nền tùy chọn</label><input id="setBg" type="color" value="#f4f6fb"><small>Dùng khi chọn “Màu tự chọn”.</small></div>
+        <div class="setting"><label for="setAccent">Màu nút/chủ đạo</label><input id="setAccent" type="color" value="#4f46e5"></div>
+        <div class="setting"><label for="setFont">Cỡ chữ</label><input id="setFont" type="range" min="0.85" max="1.25" step="0.05" value="1"><span id="setFontVal">100%</span></div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <label><input id="setEmoji" type="checkbox"> Dùng emoji vừa phải</label>
+        <label><input id="setCheck" type="checkbox"> AI hỏi kiểm tra hiểu bài</label>
+        <label><input id="setLatex" type="checkbox"> Ưu tiên công thức LaTeX</label>
+      </div>
+      <div class="theme-preview" id="themePreview"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="saveSettings">💾 Lưu cài đặt</button><button class="btn gray" id="resetSettings">↩️ Khôi phục mặc định</button><span id="setMsg" style="font-size:14px"></span></div>
+    </div>
+  </section>
+</main>
+
+<button id="bubble" title="Hỏi giáo viên AI">💬</button>
+<div id="pop"></div>
+<div id="camModal"><div><video id="camv" autoplay playsinline></video><br><br>
+  <button class="btn" id="snap">📸 Chụp</button> <button class="btn gray" id="snapX">Huỷ</button></div></div>
+
+<div id="auth" class="auth-overlay" aria-hidden="true">
+  <form id="authForm" class="card auth-card" autocomplete="on">
+    <h2 id="aTitle" style="margin-top:0">🎓 Đăng nhập</h2>
+    <div class="auth-fields">
+      <input id="aName" name="name" type="text" placeholder="Họ tên hiển thị" autocomplete="name" hidden>
+      <input id="aUser" name="username" type="text" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" spellcheck="false">
+      <input id="aPass" name="password" type="password" placeholder="Mật khẩu (tối thiểu 6 ký tự)" autocomplete="current-password" autocapitalize="none" spellcheck="false">
+      <button class="btn" id="aGo" type="submit">Đăng nhập</button>
+      <div id="aMsg" style="color:#dc2626;font-size:14px;min-height:18px"></div>
+      <a href="#" id="aSwitch">Chưa có tài khoản? Đăng ký</a>
+    </div>
+  </form>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const DEFAULT_SETTINGS = {theme:'light',bgColor:'#f4f6fb',accent:'#4f46e5',fontScale:1,teacherName:'Giáo viên AI',personality:'than-thien',address:'minh-ban',responseLength:'vua',teachingStyle:'giai-thich',emojis:true,checkUnderstanding:true,latex:true};
+let appSettings = {...DEFAULT_SETTINGS};
+function applySettings(s){ appSettings={...DEFAULT_SETTINGS,...s}; const themes={light:'#f4f6fb',dark:'#111827',mint:'#ecfdf5',sunset:'#fff7ed'}; const bg=appSettings.theme==='custom'?appSettings.bgColor:(themes[appSettings.theme]||themes.light); document.documentElement.style.setProperty('--accent',appSettings.accent); document.documentElement.style.setProperty('--card',appSettings.theme==='dark'?'#1f2937':'#fff'); document.body.style.background=bg; document.body.style.color=appSettings.theme==='dark'?'#f3f4f6':'#1c2333'; document.documentElement.style.fontSize=(appSettings.fontScale||1)+'em'; document.querySelectorAll('.tab.on,.btn').forEach(x=>x.style.backgroundColor=appSettings.accent); $('#themePreview').style.background=bg; $('#themePreview').style.boxShadow='inset 0 0 0 4px '+appSettings.accent+'33'; $('#setFontVal').textContent=Math.round((appSettings.fontScale||1)*100)+'%';}
+function fillSettingsUI(){ $('#setTeacherName').value=appSettings.teacherName; $('#setPersonality').value=appSettings.personality; $('#setAddress').value=appSettings.address; $('#setLength').value=appSettings.responseLength; $('#setStyle').value=appSettings.teachingStyle; $('#setTheme').value=appSettings.theme; $('#setBg').value=appSettings.bgColor; $('#setAccent').value=appSettings.accent; $('#setFont').value=appSettings.fontScale; $('#setEmoji').checked=appSettings.emojis; $('#setCheck').checked=appSettings.checkUnderstanding; $('#setLatex').checked=appSettings.latex; applySettings(appSettings);}
+async function loadSettings(){ try{const r=await fetch('/api/settings',{headers:{Authorization:'Bearer '+token}}); if(r.ok){appSettings=(await r.json()).settings; fillSettingsUI();}}catch{}}
+
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('section').forEach(x => x.classList.toggle('on', x.id === b.dataset.t));
+});
+
+/* ---------- Markdown + KaTeX ---------- */
+function renderMd(t) {
+  const m = [];
+  t = t.replace(/\$\$([\s\S]+?)\$\$|\$([^\n$]+?)\$/g, (s, a, b) => { m.push([a ?? b, a != null]); return '@@M' + (m.length - 1) + '@@'; });
+  return marked.parse(t).replace(/@@M(\d+)@@/g, (s, i) => katex.renderToString(m[i][0].trim(), { displayMode: m[i][1], throwOnError: false }));
+}
+
+/* ---------- Chụp ảnh bằng camera ---------- */
+function captureImage() {
+  return new Promise(async res => {
+    let st;
+    try { st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); }
+    catch { alert('Không mở được camera'); return res(null); }
+    const v = $('#camv'); v.srcObject = st; $('#camModal').classList.add('on');
+    const done = r => { st.getTracks().forEach(t => t.stop()); $('#camModal').classList.remove('on'); res(r); };
+    $('#snap').onclick = () => {
+      const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0); done(c.toDataURL('image/jpeg', .85));
+    };
+    $('#snapX').onclick = () => done(null);
+  });
+}
+const fileToDataURL = f => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+
+/* ---------- Khung chat AI (dùng cho tab chính + bong bóng) ---------- */
+function makeChat(root) {
+  root.innerHTML = `<div class="chat"><div class="msgs"></div><div class="prev"></div>
+    <div class="bar"><button class="btn gray ph" title="Thêm ảnh">🖼️</button><button class="btn gray cm" title="Chụp ảnh">📷</button>
+    <textarea rows=1 placeholder="Hỏi bài, dán đề, gửi ảnh..." autocomplete="off" spellcheck="true"></textarea><button class="btn send">➤</button></div>
+    <input type="file" accept="image/*" hidden></div>`;
+  const msgs = root.querySelector('.msgs'), prev = root.querySelector('.prev'),
+        inp = root.querySelector('textarea'), file = root.querySelector('input[type=file]');
+  let img = null, history = [], busy = false;
+  const add = (cls, html) => { const d = document.createElement('div'); d.className = 'm ' + cls; d.innerHTML = html; msgs.appendChild(d); msgs.scrollTop = 1e9; return d; };
+  const setImg = u => { img = u; prev.innerHTML = u ? `<img src="${u}"> <button class="btn gray" style="padding:2px 8px">✕</button>` : ''; if (u) prev.querySelector('button').onclick = () => setImg(null); };
+  add('a', renderMd('Chào bạn! Mình là giáo viên AI. Bạn muốn học gì hôm nay? Có thể gửi ảnh bài tập, mình sẽ giảng từng bước nhé. 😊'));
+
+  async function ask(text) {
+    text = (text ?? inp.value).trim();
+    if ((!text && !img) || busy) return;
+    busy = true; inp.value = '';
+    const parts = [{ text: text || 'Hãy giải và giảng bài trong ảnh này.' }];
+    if (img) parts.push({ inlineData: { mimeType: 'image/jpeg', data: img.split(',')[1] } });
+    add('u', (img ? `<img src="${img}">` : '') + (text ? text.replace(/</g, '&lt;') : ''));
+    history.push({ role: 'user', parts }); setImg(null);
+    const wait = add('a', '⏳ Đang suy nghĩ...');
+    try {
+      const r = await api('/api/chat', { contents: history });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      wait.innerHTML = renderMd(d.text);
+      history.push({ role: 'model', parts: [{ text: d.text }] });
+      history.forEach(h => h.parts = h.parts.map(p => p.inlineData ? { text: '[đã gửi 1 ảnh]' } : p)); // bỏ ảnh cũ cho nhẹ
+    } catch (e) { wait.textContent = '⚠️ ' + e.message; history.pop(); }
+    busy = false; msgs.scrollTop = 1e9;
+  }
+  root.querySelector('.send').onclick = () => ask();
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      ask();
+    }
+    // Shift+Enter xuống dòng; phím Space được để nguyên cho textarea.
+  });
+
+  root.querySelector('.ph').onclick = () => file.click();
+  file.onchange = async () => { if (file.files[0]) setImg(await fileToDataURL(file.files[0])); file.value = ''; };
+  root.querySelector('.cm').onclick = async () => { const u = await captureImage(); if (u) setImg(u); };
+  return { ask };
+}
+const mainChat = makeChat($('#aiMain'));
+const popChat = makeChat($('#pop'));
+$('#bubble').onclick = () => $('#pop').classList.toggle('on');
+
+/* ---------- Phòng học WebRTC ---------- */
+const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+let socket, local, peers = {}, myName = '';
+const grid = $('#grid');
+
+function tile(id, stream, label) {
+  let t = document.getElementById('t_' + id);
+  if (!t) { t = document.createElement('div'); t.className = 'tile'; t.id = 't_' + id; t.innerHTML = '<video autoplay playsinline></video><span></span>'; grid.appendChild(t); }
+  const v = t.querySelector('video'); if (v.srcObject !== stream) v.srcObject = stream;
+  if (id === 'me') v.muted = true;
+  t.querySelector('span').textContent = label;
+}
+function makePeer(id, name) {
+  const pc = new RTCPeerConnection(ICE); peers[id] = pc;
+  local.getTracks().forEach(t => pc.addTrack(t, local));
+  pc.onicecandidate = e => e.candidate && socket.emit('signal', { to: id, data: { candidate: e.candidate } });
+  pc.ontrack = e => tile(id, e.streams[0], name || 'Bạn học');
+  return pc;
+}
+async function enterRoom(code) {
+  code = code.trim().toUpperCase(); if (!code) return alert('Nhập mã phòng');
+  myName = $('#name').value || 'Tôi';
+  try { local = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); }
+  catch { try { local = await navigator.mediaDevices.getUserMedia({ audio: true }); alert('Không bật được camera, chỉ dùng mic.'); } catch { return alert('Cần cho phép camera/mic (và dùng https hoặc localhost).'); } }
+  tile('me', local, myName + ' (bạn)');
+  socket = io({ auth: { token } });
+  socket.on('connect', () => socket.emit('join', code));
+  socket.on('connect_error', () => { alert('Phiên đăng nhập hết hạn'); logout(); });
+  socket.on('peers', async list => { for (const { id, name } of list) { const pc = makePeer(id, name); const o = await pc.createOffer(); await pc.setLocalDescription(o); socket.emit('signal', { to: id, data: { sdp: pc.localDescription } }); } });
+  socket.on('signal', async ({ from, name, data }) => {
+    const pc = peers[from] || makePeer(from, name);
+    if (data.sdp) {
+      await pc.setRemoteDescription(data.sdp);
+      if (data.sdp.type === 'offer') { const a = await pc.createAnswer(); await pc.setLocalDescription(a); socket.emit('signal', { to: from, data: { sdp: pc.localDescription } }); }
+    } else if (data.candidate) pc.addIceCandidate(data.candidate).catch(() => {});
+  });
+  socket.on('peer-left', id => { peers[id]?.close(); delete peers[id]; document.getElementById('t_' + id)?.remove(); });
+  $('#lobby').style.display = 'none'; $('#ctrl').style.display = 'flex'; $('#hint').style.display = 'none';
+  $('#roomTag').textContent = '🔑 Phòng: ' + code; history.replaceState(null, '', '?room=' + code);
+}
+$('#create').onclick = () => enterRoom(Math.random().toString(36).slice(2, 8));
+$('#join').onclick = () => enterRoom($('#code').value);
+$('#copy').onclick = () => navigator.clipboard.writeText(location.href).then(() => alert('Đã sao chép link phòng'));
+$('#mic').onclick = e => { const t = local.getAudioTracks()[0]; if (!t) return; t.enabled = !t.enabled; e.target.textContent = '🎤 Mic: ' + (t.enabled ? 'Bật' : 'Tắt'); };
+$('#cam').onclick = e => { const t = local.getVideoTracks()[0]; if (!t) return; t.enabled = !t.enabled; e.target.textContent = '📹 Camera: ' + (t.enabled ? 'Bật' : 'Tắt'); };
+$('#leave').onclick = () => location.href = location.pathname;
+const pr = new URLSearchParams(location.search).get('room'); if (pr) $('#code').value = pr;
+
+/* ---------- Kho đề (đọc từ data/exams.json) ---------- */
+let bank = { subjects: [] };
+async function loadBank() {
+  bank = await (await fetch('data/exams.json?t=' + Date.now())).json();
+  $('#subj').innerHTML = bank.subjects.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
+  fillExams();
+}
+function fillExams() {
+  const s = bank.subjects[$('#subj').value] || { exams: [] };
+  $('#exam').innerHTML = s.exams.map((e, i) => `<option value="${i}">${e.title}</option>`).join('');
+  showExam();
+}
+function showExam() {
+  const e = bank.subjects[$('#subj').value]?.exams[$('#exam').value]; if (!e) { $('#quiz').innerHTML = 'Chưa có đề.'; return; }
+  let score = 0, done = 0;
+  const box = $('#quiz'); box.innerHTML = '<h3>' + e.title + '</h3><div id="score"></div>';
+  e.questions.forEach((q, qi) => {
+    const d = document.createElement('div'); d.className = 'q';
+    d.innerHTML = `<b>Câu ${qi + 1}.</b> ${renderMd(q.q)}` + q.options.map((o, oi) => `<label class="opt" data-i="${oi}">${String.fromCharCode(65 + oi)}. ${renderMd(o).replace(/<\/?p>/g, '')}</label>`).join('');
+    d.querySelectorAll('.opt').forEach(l => l.onclick = () => {
+      if (d.dataset.done) return; d.dataset.done = 1; done++;
+      const pick = +l.dataset.i; if (pick === q.answer) score++;
+      d.querySelectorAll('.opt').forEach(x => x.classList.add(+x.dataset.i === q.answer ? 'ok' : (+x.dataset.i === pick ? 'bad' : 'x')));
+      const ex = document.createElement('div'); ex.className = 'ex';
+      ex.innerHTML = (q.explain ? '💡 ' + renderMd(q.explain) : '') + '<button class="btn gray" style="margin-top:6px">🤖 Nhờ AI giảng câu này</button>';
+      ex.querySelector('button').onclick = () => { $('#pop').classList.add('on'); popChat.ask(`Hãy giảng cho em câu này: ${q.q}\nCác đáp án: ${q.options.join(' | ')}\nĐáp án đúng: ${q.options[q.answer]}`); };
+      d.appendChild(ex);
+      $('#score').innerHTML = `<p>Đã làm ${done}/${e.questions.length} – Đúng ${score}</p>`;
+    });
+    box.appendChild(d);
+  });
+}
+$('#subj').onchange = fillExams; $('#exam').onchange = showExam; $('#reload').onclick = loadBank;
+loadBank();
+
+/* ---------- Cài đặt ---------- */
+$('#setFont').oninput=e=>$('#setFontVal').textContent=Math.round(+e.target.value*100)+'%';
+['setTheme','setBg','setAccent','setFont'].forEach(id=>$('#'+id).addEventListener('input',()=>{const temp={...appSettings,theme:$('#setTheme').value,bgColor:$('#setBg').value,accent:$('#setAccent').value,fontScale:+$('#setFont').value}; applySettings(temp);}));
+$('#saveSettings').onclick=async()=>{ const msg=$('#setMsg'); const s={theme:$('#setTheme').value,bgColor:$('#setBg').value,accent:$('#setAccent').value,fontScale:+$('#setFont').value,teacherName:$('#setTeacherName').value.trim()||'Giáo viên AI',personality:$('#setPersonality').value,address:$('#setAddress').value,responseLength:$('#setLength').value,teachingStyle:$('#setStyle').value,emojis:$('#setEmoji').checked,checkUnderstanding:$('#setCheck').checked,latex:$('#setLatex').checked}; msg.textContent='⏳ Đang lưu...'; try{const r=await fetch('/api/settings',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(s)}); const d=await r.json(); if(!r.ok)throw new Error(d.error); appSettings=d.settings; applySettings(appSettings); fillSettingsUI(); msg.textContent='✅ Đã lưu'; setTimeout(()=>msg.textContent='',1800);}catch(e){msg.textContent='⚠️ '+e.message;}};
+$('#resetSettings').onclick=()=>{appSettings={...DEFAULT_SETTINGS};fillSettingsUI();};
+
+/* ---------- Đăng nhập / đăng ký ---------- */
+let token = localStorage.getItem('tk'), user = null, regMode = false;
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function api(url, body) {
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+  if (r.status === 401) { alert('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại'); logout(); }
+  return r;
+}
+function logout() { localStorage.removeItem('tk'); location.href = location.pathname; }
+function setMode(reg) {
+  regMode = !!reg;
+  $('#aTitle').textContent = regMode ? '📝 Đăng ký tài khoản' : '🎓 Đăng nhập';
+  $('#aName').hidden = !regMode;
+  $('#aGo').textContent = regMode ? 'Đăng ký' : 'Đăng nhập';
+  $('#aSwitch').textContent = regMode ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký';
+  $('#aPass').autocomplete = regMode ? 'new-password' : 'current-password';
+  $('#aMsg').textContent = '';
+  // Explicitly restore normal input behavior in case the page was reused.
+  $('#aPass').readOnly = false;
+  $('#aPass').disabled = false;
+  requestAnimationFrame(() => {
+    $('#aPass').focus();
+  });
+}
+$('#aSwitch').onclick = e => { e.preventDefault(); setMode(!regMode); };
+$('#authForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = { username: $('#aUser').value.trim(), password: $('#aPass').value };
+  if (regMode) { body.name = $('#aName').value.trim(); }
+  if (!body.username) { $('#aMsg').textContent = 'Vui lòng nhập tên đăng nhập'; $('#aUser').focus(); return; }
+  if (!body.password) { $('#aMsg').textContent = 'Vui lòng nhập mật khẩu'; $('#aPass').focus(); return; }
+  $('#aMsg').textContent = '⏳';
+  try {
+    const r = await fetch('/api/' + (regMode ? 'register' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Đăng nhập thất bại');
+    token = d.token; localStorage.setItem('tk', token); enter(d.user);
+  } catch (e) { $('#aMsg').textContent = e.message; $('#aPass').focus(); }
+});
+function enter(u) {
+  user = u; $('#auth').classList.remove('on'); $('#auth').setAttribute('aria-hidden', 'true');
+  $('#me').innerHTML = `👤 ${esc(u.name)} <small>(${u.role === 'teacher' ? 'Giáo viên' : 'Học sinh'})</small> <button class="btn gray" id="out" style="padding:5px 10px">Đăng xuất</button>`;
+  $('#out').onclick = logout;
+  $('#name').value = u.name; $('#name').disabled = true;
+  loadSettings();
+}
+(async () => {
+  if (location.protocol === 'file:') {
+    $('#aMsg').textContent = 'Hãy chạy server rồi mở http://localhost:3000, không mở trực tiếp file HTML.';
+    $('#aGo').disabled = true;
+    return;
+  }
+  if (token) { try { const r = await fetch('/api/me', { headers: { Authorization: 'Bearer ' + token } }); if (r.ok) return enter((await r.json()).user); } catch {} }
+  $('#auth').classList.add('on'); $('#auth').setAttribute('aria-hidden', 'false');
+  setTimeout(() => $('#aUser').focus(), 0);
+})();
+
+/* ---------- Chia sẻ màn hình ---------- */
+let sharing = null;
+$('#share').onclick = async e => {
+  const setVideo = track => Object.values(peers).forEach(pc => pc.getSenders().find(x => x.track && x.track.kind === 'video')?.replaceTrack(track));
+  if (sharing) { sharing.getTracks().forEach(t => t.stop()); return stopShare(); }
+  try { sharing = await navigator.mediaDevices.getDisplayMedia({ video: true }); } catch { return; }
+  const st = sharing.getVideoTracks()[0];
+  setVideo(st); tile('me', sharing, myName + ' (màn hình)'); e.target.textContent = '⏹️ Dừng chia sẻ';
+  st.onended = stopShare;
+  function stopShare() {
+    sharing = null; const cam = local.getVideoTracks()[0];
+    if (cam) setVideo(cam); tile('me', local, myName + ' (bạn)'); $('#share').textContent = '🖥️ Chia sẻ màn hình';
+  }
+};
+
+
+/* ---------- Thêm đề thủ công ---------- */
+$('#addExam').onclick=async()=>{ const msg=$('#mMsg'), b=$('#addExam'); msg.textContent='⏳'; try{ const subject=$('#mSubj').value.trim(), title=$('#mTitle').value.trim(); if(!subject||!title) throw new Error('Nhập môn và tên đề'); const obj=JSON.parse($('#mJson').value); obj.title=title; const r=await api('/api/exams',{subject,exam:obj}); const d=await r.json(); if(!r.ok)throw new Error(d.error); msg.textContent=`✅ Đã thêm “${d.title}” (${d.count} câu)`; await loadBank(); }catch(e){msg.textContent='⚠️ '+e.message;} };
+
+/* ---------- AI tạo đề ---------- */
+$('#gen').onclick = async () => {
+  const msg = $('#gMsg'), b = $('#gen'); msg.textContent = '⏳ AI đang soạn đề...'; b.disabled = true;
+  try {
+    const r = await api('/api/generate-exam', { subject: $('#gSubj').value, topic: $('#gTopic').value, count: $('#gCount').value });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error);
+    msg.textContent = `✅ Đã thêm "${d.title}" (${d.count} câu) vào kho.`; await loadBank();
+    const i = bank.subjects.findIndex(x => x.name.toLowerCase() === $('#gSubj').value.trim().toLowerCase());
+    if (i >= 0) { $('#subj').value = i; fillExams(); $('#exam').value = bank.subjects[i].exams.length - 1; showExam(); }
+  } catch (e) { msg.textContent = '⚠️ ' + e.message; }
+  b.disabled = false;
+};
+</script>
+</body>
+</html>

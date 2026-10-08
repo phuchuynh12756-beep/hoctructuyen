@@ -1,0 +1,108 @@
+{
+  "subjects": [
+    {
+      "name": "Toán",
+      "exams": [
+        {
+          "title": "Đề ôn 1 – Đại số cơ bản",
+          "questions": [
+            {
+              "q": "Nghiệm của phương trình $2x + 6 = 0$ là:",
+              "options": [
+                "$x=3$",
+                "$x=-3$",
+                "$x=6$",
+                "$x=-6$"
+              ],
+              "answer": 1,
+              "explain": "$2x=-6 \\Rightarrow x=-3$."
+            },
+            {
+              "q": "Giá trị của $\\sqrt{49} + 3^2$ là:",
+              "options": [
+                "$16$",
+                "$13$",
+                "$58$",
+                "$12$"
+              ],
+              "answer": 0,
+              "explain": "$7 + 9 = 16$."
+            }
+          ]
+        },
+        {
+          "title": "Đề ôn tập trắc nghiệm Toán 8: Nhân đơn thức với đa thức",
+          "questions": [
+            {
+              "q": "Thực hiện phép tính: $2x(x+3)$",
+              "options": [
+                "$2x^2 + 3$",
+                "$2x^2 + 6x$",
+                "$2x^2 + 6$",
+                "$2x + 6x$"
+              ],
+              "answer": 1,
+              "explain": "Áp dụng quy tắc nhân đơn thức với đa thức, ta có $2x(x+3) = 2x \\cdot x + 2x \\cdot 3 = 2x^2 + 6x$."
+            },
+            {
+              "q": "Kết quả của phép tính $-3x^2(x^2 - 2x + 1)$ là:",
+              "options": [
+                "$-3x^4 - 6x^3 + 3x^2$",
+                "$-3x^4 + 6x^3 - 3x^2$",
+                "$3x^4 - 6x^3 + 3x^2$",
+                "$-3x^4 + 6x^3 + 3x^2$"
+              ],
+              "answer": 1,
+              "explain": "Ta nhân đơn thức $-3x^2$ với từng hạng tử của đa thức $x^2 - 2x + 1$: \n$-3x^2 \\cdot x^2 = -3x^4$\n$-3x^2 \\cdot (-2x) = 6x^3$\n$-3x^2 \\cdot 1 = -3x^2$\nVậy, $-3x^2(x^2 - 2x + 1) = -3x^4 + 6x^3 - 3x^2$."
+            },
+            {
+              "q": "Rút gọn biểu thức $3x(x^2 - 2x) + x^2(3 - x)$ ta được:",
+              "options": [
+                "$2x^3 - 3x^2$",
+                "$2x^3 + 3x^2$",
+                "$4x^3 - 9x^2$",
+                "$6x^2 - 2x^3$"
+              ],
+              "answer": 0,
+              "explain": "Thực hiện phép nhân:\n$3x(x^2 - 2x) = 3x \\cdot x^2 + 3x \\cdot (-2x) = 3x^3 - 6x^2$\n$x^2(3 - x) = x^2 \\cdot 3 + x^2 \\cdot (-x) = 3x^2 - x^3$\nCộng hai kết quả lại và rút gọn các hạng tử đồng dạng:\n$(3x^3 - 6x^2) + (3x^2 - x^3) = (3x^3 - x^3) + (-6x^2 + 3x^2) = 2x^3 - 3x^2$."
+            },
+            {
+              "q": "Giá trị của biểu thức $A = x(x+2) - (x^2 + 2x - 5)$ là:",
+              "options": [
+                "$2x + 5$",
+                "$-5$",
+                "$5$",
+                "$x^2 + 5$"
+              ],
+              "answer": 2,
+              "explain": "Đầu tiên, thực hiện phép nhân:\n$x(x+2) = x^2 + 2x$\nSau đó, thay vào biểu thức $A$:\n$A = (x^2 + 2x) - (x^2 + 2x - 5)$\nKhi bỏ dấu ngoặc có dấu trừ phía trước, ta đổi dấu tất cả các hạng tử bên trong:\n$A = x^2 + 2x - x^2 - 2x + 5$\nRút gọn các hạng tử đồng dạng:\n$A = (x^2 - x^2) + (2x - 2x) + 5 = 0 + 0 + 5 = 5$."
+            }
+          ],
+          "createdBy": "phúc",
+          "createdAt": 1791474766721
+        }
+      ]
+    },
+    {
+      "name": "Vật lý",
+      "exams": [
+        {
+          "title": "Đề ôn 1 – Chuyển động",
+          "questions": [
+            {
+              "q": "Một xe đi $120\\,km$ trong $2\\,h$. Vận tốc trung bình là:",
+              "options": [
+                "$40\\,km/h$",
+                "$60\\,km/h$",
+                "$240\\,km/h$",
+                "$80\\,km/h$"
+              ],
+              "answer": 1,
+              "explain": "$v = \\frac{s}{t} = \\frac{120}{2} = 60\\,km/h$."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

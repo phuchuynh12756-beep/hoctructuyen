@@ -1,0 +1,23 @@
+{
+  "phuchuynh": {
+    "name": "phúc",
+    "salt": "f9e0d7c51f21dab3d72c347b839a1d97",
+    "hash": "f22636349b7bc86323c088bb39b73866b0be81278650bdcdd07a7f1c27ae258e2471139ce4b978759ba9c3a1e5e23a09a9473ff87ca0f5ebc3e707f4300bd281",
+    "role": "teacher",
+    "created": 1791473941077,
+    "settings": {
+      "theme": "light",
+      "bgColor": "#f4f6fb",
+      "accent": "#4f46e5",
+      "fontScale": 1,
+      "teacherName": "Giáo viên AI",
+      "personality": "than-thien",
+      "address": "minh-ban",
+      "responseLength": "vua",
+      "teachingStyle": "giai-thich",
+      "emojis": true,
+      "checkUnderstanding": true,
+      "latex": true
+    }
+  }
+}
