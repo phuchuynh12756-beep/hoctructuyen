@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lớp học trực tuyến + Giáo viên AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lớp học trực tuyến</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
@@ -45,6 +45,9 @@ input,select,textarea{padding:9px;border:1px solid #cfd5e3;border-radius:8px;fon
 .auth-fields input:disabled{pointer-events:auto}
 .auth-fields input[type=password]{-webkit-text-security:disc}
 .auth-fields button,.auth-fields a{pointer-events:auto}
+@media(max-width:700px){header{padding:8px;gap:5px}header h1{width:100%;font-size:19px}.tab{flex:1;padding:9px 6px;font-size:12px;min-width:0}#me{width:100%;margin-left:0!important}main{margin:10px auto;padding:0 8px}.card{padding:12px}.row>*{max-width:100%}input,select,textarea{min-width:0;max-width:100%}#ctrl .btn{flex:1;min-width:42%;padding:10px 7px}#grid{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}#aiMain{height:68dvh}.q{padding:10px}#bank .row select{flex:1;min-width:0;width:100%}.exam-tools{display:flex;gap:8px;flex-wrap:wrap}.exam-tools button{flex:1}.builder-grid{display:grid;grid-template-columns:1fr;gap:8px}.builder-grid input,.builder-grid select,.builder-grid textarea{width:100%}}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #818cf8;outline-offset:2px}
+
 </style>
 </head>
 <body>
@@ -71,6 +74,7 @@ input,select,textarea{padding:9px;border:1px solid #cfd5e3;border-radius:8px;fon
         <button class="btn gray" id="copy">📋 Sao chép link</button>
         <button class="btn gray" id="mic">🎤 Mic: Bật</button>
         <button class="btn gray" id="cam">📹 Camera: Bật</button>
+        <button class="btn gray" id="flipCam">🔄 Đổi camera</button>
         <button class="btn gray" id="share">🖥️ Chia sẻ màn hình</button>
         <button class="btn red" id="leave">Rời phòng</button>
       </div>
@@ -98,14 +102,24 @@ input,select,textarea{padding:9px;border:1px solid #cfd5e3;border-radius:8px;fon
         </div><div id="gMsg" style="margin-top:6px;font-size:14px"></div>
       </details>
       <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">➕ Tự thêm đề vào kho</summary>
-        <p style="color:#6b7280;font-size:13px">Ai đã đăng nhập cũng có thể đóng góp đề. Dùng đúng mẫu JSON bên dưới.</p>
-        <div class="row"><input id="mSubj" placeholder="Môn, ví dụ: Toán" style="flex:1;min-width:180px"><input id="mTitle" placeholder="Tên đề" style="flex:2;min-width:220px"></div>
-        <textarea id="mJson" rows="12" style="width:100%;margin-top:8px" spellcheck="false">{
-  "questions": [
-    {"q":"2 + 2 = ?","options":["3","4","5","6"],"answer":1,"explain":"2 + 2 = 4."}
-  ]
-}</textarea>
-        <div class="row" style="margin-top:8px"><button class="btn" id="addExam">📚 Thêm vào kho</button><span id="mMsg" style="font-size:14px"></span></div>
+        <p style="color:#6b7280;font-size:13px">Mọi tài khoản đều có thể đăng đề. Bạn có thể tự soạn câu hỏi hoặc tải ảnh đề lên để AI nhận dạng. Chỉ người đăng mới sửa/xóa đề đó.</p>
+        <div class="builder-grid">
+          <input id="mSubj" placeholder="Môn học, ví dụ: Toán">
+          <input id="mTitle" placeholder="Tên đề">
+          <label>Ảnh đề có sẵn <input id="examImage" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label>
+          <button class="btn gray" id="parseImage" type="button">📷 Đọc ảnh và thêm đề</button>
+        </div>
+        <hr style="border:0;border-top:1px solid #e5e7eb;margin:14px 0">
+        <div class="builder-grid">
+          <select id="qType"><option value="choice">Trắc nghiệm</option><option value="truefalse">Đúng / Sai</option><option value="short">Trả lời ngắn</option><option value="essay">Tự luận</option></select>
+          <textarea id="qText" rows="2" placeholder="Nội dung câu hỏi"></textarea>
+          <div id="choiceFields"><input id="optA" placeholder="Đáp án A"><input id="optB" placeholder="Đáp án B"><input id="optC" placeholder="Đáp án C (không bắt buộc)"><input id="optD" placeholder="Đáp án D (không bắt buộc)"><select id="qAnswer"><option value="0">Đáp án đúng: A</option><option value="1">Đáp án đúng: B</option><option value="2">Đáp án đúng: C</option><option value="3">Đáp án đúng: D</option></select></div>
+          <input id="answerText" placeholder="Đáp án tham khảo (không bắt buộc)" hidden>
+          <textarea id="qExplain" rows="2" placeholder="Giải thích (không bắt buộc)"></textarea>
+          <button class="btn gray" id="addQuestion" type="button">＋ Thêm câu vào bản nháp</button>
+          <div id="draftList"></div>
+          <button class="btn" id="addExam" type="button">📚 Lưu đề vào kho chung</button><span id="mMsg" style="font-size:14px"></span>
+        </div>
       </details>
       <div id="quiz"></div>
     </div>
@@ -247,7 +261,7 @@ $('#bubble').onclick = () => $('#pop').classList.toggle('on');
 
 /* ---------- Phòng học WebRTC ---------- */
 const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-let socket, local, peers = {}, myName = '';
+let socket, local, peers = {}, myName = '', cameraFacing = 'user';
 const grid = $('#grid');
 
 function tile(id, stream, label) {
@@ -267,7 +281,7 @@ function makePeer(id, name) {
 async function enterRoom(code) {
   code = code.trim().toUpperCase(); if (!code) return alert('Nhập mã phòng');
   myName = $('#name').value || 'Tôi';
-  try { local = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); }
+  try { local = await navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing }, audio: true }); }
   catch { try { local = await navigator.mediaDevices.getUserMedia({ audio: true }); alert('Không bật được camera, chỉ dùng mic.'); } catch { return alert('Cần cho phép camera/mic (và dùng https hoặc localhost).'); } }
   tile('me', local, myName + ' (bạn)');
   socket = io({ auth: { token } });
@@ -290,6 +304,7 @@ $('#join').onclick = () => enterRoom($('#code').value);
 $('#copy').onclick = () => navigator.clipboard.writeText(location.href).then(() => alert('Đã sao chép link phòng'));
 $('#mic').onclick = e => { const t = local.getAudioTracks()[0]; if (!t) return; t.enabled = !t.enabled; e.target.textContent = '🎤 Mic: ' + (t.enabled ? 'Bật' : 'Tắt'); };
 $('#cam').onclick = e => { const t = local.getVideoTracks()[0]; if (!t) return; t.enabled = !t.enabled; e.target.textContent = '📹 Camera: ' + (t.enabled ? 'Bật' : 'Tắt'); };
+$('#flipCam').onclick = async () => { if(!local) return alert('Hãy vào phòng trước.'); cameraFacing = cameraFacing === 'user' ? 'environment' : 'user'; try { const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing}},audio:false}); const track=stream.getVideoTracks()[0]; const old=local.getVideoTracks()[0]; if(old) { local.removeTrack(old); old.stop(); } local.addTrack(track); for(const pc of Object.values(peers)){const sender=pc.getSenders().find(x=>x.track?.kind==='video');if(sender)await sender.replaceTrack(track);} tile('me',local,myName+' (bạn)'); } catch(err){cameraFacing=cameraFacing==='user'?'environment':'user';alert('Không đổi được camera trên thiết bị này.');} };
 $('#leave').onclick = () => location.href = location.pathname;
 const pr = new URLSearchParams(location.search).get('room'); if (pr) $('#code').value = pr;
 
@@ -311,19 +326,29 @@ function showExam() {
   const box = $('#quiz'); box.innerHTML = '<h3>' + e.title + '</h3><div id="score"></div>';
   e.questions.forEach((q, qi) => {
     const d = document.createElement('div'); d.className = 'q';
-    d.innerHTML = `<b>Câu ${qi + 1}.</b> ${renderMd(q.q)}` + q.options.map((o, oi) => `<label class="opt" data-i="${oi}">${String.fromCharCode(65 + oi)}. ${renderMd(o).replace(/<\/?p>/g, '')}</label>`).join('');
-    d.querySelectorAll('.opt').forEach(l => l.onclick = () => {
-      if (d.dataset.done) return; d.dataset.done = 1; done++;
-      const pick = +l.dataset.i; if (pick === q.answer) score++;
-      d.querySelectorAll('.opt').forEach(x => x.classList.add(+x.dataset.i === q.answer ? 'ok' : (+x.dataset.i === pick ? 'bad' : 'x')));
-      const ex = document.createElement('div'); ex.className = 'ex';
-      ex.innerHTML = (q.explain ? '💡 ' + renderMd(q.explain) : '') + '<button class="btn gray" style="margin-top:6px">🤖 Nhờ AI giảng câu này</button>';
-      ex.querySelector('button').onclick = () => { $('#pop').classList.add('on'); popChat.ask(`Hãy giảng cho em câu này: ${q.q}\nCác đáp án: ${q.options.join(' | ')}\nĐáp án đúng: ${q.options[q.answer]}`); };
-      d.appendChild(ex);
-      $('#score').innerHTML = `<p>Đã làm ${done}/${e.questions.length} – Đúng ${score}</p>`;
-    });
+    d.innerHTML = `<b>Câu ${qi + 1}.</b> ${renderMd(q.q)}`;
+    const type = q.type || (q.options?.length ? 'choice' : 'essay');
+    if (type === 'choice' || type === 'truefalse' || q.options?.length) {
+      (q.options || ['Đúng','Sai']).forEach((o, oi) => {
+        const l=document.createElement('label'); l.className='opt';
+        const letter=document.createElement('strong'); letter.textContent=String.fromCharCode(65+oi)+'. '; l.appendChild(letter);
+        const optionBody=document.createElement('span'); optionBody.className='math-option'; optionBody.innerHTML=renderMd(String(o)); l.appendChild(optionBody);
+        l.onclick=()=>{
+          if(d.dataset.done)return; d.dataset.done='1'; done++; const correct=q.answer==null?null:+q.answer; if(correct===oi)score++;
+          d.querySelectorAll('.opt').forEach((x,j)=>{if(correct!==null&&j===correct)x.classList.add('ok');else if(j===oi)x.classList.add('bad');});
+          finishQuestion(d,q,e,qi,done,score); $('#score').innerHTML=`<p>Đã làm ${done}/${e.questions.length} – Đúng ${score}</p>`;
+        }; d.appendChild(l);
+      });
+    } else {
+      const ta=document.createElement('textarea'); ta.rows=3; ta.placeholder=type==='short'?'Nhập câu trả lời ngắn':'Viết câu trả lời tự luận'; ta.style.width='100%'; d.appendChild(ta);
+      const submit=document.createElement('button'); submit.className='btn gray'; submit.textContent='Xem đáp án tham khảo'; submit.onclick=()=>{if(d.dataset.done)return;d.dataset.done='1';done++; const out=document.createElement('div');out.className='ex';out.innerHTML=(q.answerText?'<b>Đáp án tham khảo:</b> '+renderMd(q.answerText):'Đây là câu hỏi tự luận, không có đáp án chấm tự động.')+(q.explain?'<p>'+renderMd(q.explain)+'</p>':'');d.appendChild(out);submit.disabled=true;$('#score').innerHTML=`<p>Đã xem ${done}/${e.questions.length} câu</p>`;}; d.appendChild(submit);
+    }
+    if (e.createdByUsername && user && e.createdByUsername === user.username) { const del=document.createElement('button');del.className='btn red';del.style.marginTop='8px';del.textContent='🗑️ Xóa đề của mình';del.onclick=async()=>{if(!confirm('Bạn có chắc muốn xóa đề này khỏi kho chung?'))return;try{const r=await fetch('/api/exams/'+encodeURIComponent(e.id),{method:'DELETE',headers:{Authorization:'Bearer '+token}});const d=await r.json();if(!r.ok)throw new Error(d.error);await loadBank();}catch(err){alert(err.message);}};box.appendChild(del);}
     box.appendChild(d);
   });
+  function finishQuestion(d,q,e,qi,done,score){const ex=document.createElement('div');ex.className='ex';ex.innerHTML=(q.explain?'💡 '+renderMd(q.explain):'')+'<button class="btn gray" style="margin-top:6px">🤖 Nhờ AI giảng câu này</button>';ex.querySelector('button').onclick=()=>{$('#pop').classList.add('on');popChat.ask(`Hãy giảng cho mình câu này: ${q.q}
+Đáp án: ${(q.options||[]).join(' | ')}
+Đáp án đúng: ${(q.options||[])[q.answer]||q.answerText||'Tự luận'}`);};d.appendChild(ex);}
 }
 $('#subj').onchange = fillExams; $('#exam').onchange = showExam; $('#reload').onclick = loadBank;
 loadBank();
@@ -375,7 +400,7 @@ $('#authForm').addEventListener('submit', async e => {
 });
 function enter(u) {
   user = u; $('#auth').classList.remove('on'); $('#auth').setAttribute('aria-hidden', 'true');
-  $('#me').innerHTML = `👤 ${esc(u.name)} <small>(${u.role === 'teacher' ? 'Giáo viên' : 'Học sinh'})</small> <button class="btn gray" id="out" style="padding:5px 10px">Đăng xuất</button>`;
+  $('#me').innerHTML = `👤 ${esc(u.name)} <small>(Thành viên)</small> <button class="btn gray" id="out" style="padding:5px 10px">Đăng xuất</button>`;
   $('#out').onclick = logout;
   $('#name').value = u.name; $('#name').disabled = true;
   loadSettings();
@@ -396,7 +421,8 @@ let sharing = null;
 $('#share').onclick = async e => {
   const setVideo = track => Object.values(peers).forEach(pc => pc.getSenders().find(x => x.track && x.track.kind === 'video')?.replaceTrack(track));
   if (sharing) { sharing.getTracks().forEach(t => t.stop()); return stopShare(); }
-  try { sharing = await navigator.mediaDevices.getDisplayMedia({ video: true }); } catch { return; }
+  if (!navigator.mediaDevices?.getDisplayMedia) { alert('Trình duyệt/điện thoại này không hỗ trợ chia sẻ màn hình trực tiếp từ trang web. Hãy thử Chrome/Edge mới nhất; trên iPhone/iPad, một số trình duyệt không cung cấp API này.'); return; }
+  try { sharing = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'browser' }, audio: false }); } catch (err) { if(err?.name!=='AbortError') alert('Không bắt đầu được chia sẻ màn hình. Hãy dùng HTTPS, cấp quyền và kiểm tra trình duyệt có hỗ trợ không.'); return; }
   const st = sharing.getVideoTracks()[0];
   setVideo(st); tile('me', sharing, myName + ' (màn hình)'); e.target.textContent = '⏹️ Dừng chia sẻ';
   st.onended = stopShare;
@@ -408,7 +434,12 @@ $('#share').onclick = async e => {
 
 
 /* ---------- Thêm đề thủ công ---------- */
-$('#addExam').onclick=async()=>{ const msg=$('#mMsg'), b=$('#addExam'); msg.textContent='⏳'; try{ const subject=$('#mSubj').value.trim(), title=$('#mTitle').value.trim(); if(!subject||!title) throw new Error('Nhập môn và tên đề'); const obj=JSON.parse($('#mJson').value); obj.title=title; const r=await api('/api/exams',{subject,exam:obj}); const d=await r.json(); if(!r.ok)throw new Error(d.error); msg.textContent=`✅ Đã thêm “${d.title}” (${d.count} câu)`; await loadBank(); }catch(e){msg.textContent='⚠️ '+e.message;} };
+let draftQuestions=[];
+function updateDraft(){ $('#draftList').innerHTML=draftQuestions.map((q,i)=>`<div class="q"><b>Câu ${i+1} (${q.type})</b><p>${esc(q.q)}</p><button class="btn red" data-rm="${i}">Xóa câu</button></div>`).join('');$('#draftList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{draftQuestions.splice(+b.dataset.rm,1);updateDraft();}); }
+$('#qType').onchange=()=>{const t=$('#qType').value;$('#choiceFields').hidden=!(t==='choice'||t==='truefalse');$('#answerText').hidden=(t==='choice'||t==='truefalse');};
+$('#addQuestion').onclick=()=>{const type=$('#qType').value,q={type,q:$('#qText').value.trim(),explain:$('#qExplain').value.trim()};if(!q.q)return alert('Nhập nội dung câu hỏi.');if(type==='choice'){q.options=[$('#optA').value,$('#optB').value,$('#optC').value,$('#optD').value].filter(x=>x.trim());if(q.options.length<2)return alert('Trắc nghiệm cần ít nhất 2 đáp án.');q.answer=+$('#qAnswer').value;if(q.answer>=q.options.length)return alert('Chọn đáp án đúng đang có trong danh sách.');}else if(type==='truefalse'){q.options=['Đúng','Sai'];q.answer=+$('#qAnswer').value;}else q.answerText=$('#answerText').value.trim();draftQuestions.push(q);$('#qText').value='';$('#qExplain').value='';['optA','optB','optC','optD','answerText'].forEach(id=>$('#'+id).value='');updateDraft();};
+$('#addExam').onclick=async()=>{const msg=$('#mMsg');msg.textContent='⏳ Đang lưu...';try{const subject=$('#mSubj').value.trim(),title=$('#mTitle').value.trim();if(!subject||!title)throw new Error('Nhập môn học và tên đề');if(!draftQuestions.length)throw new Error('Hãy thêm ít nhất một câu vào bản nháp');const r=await api('/api/exams',{subject,exam:{title,questions:draftQuestions}});const d=await r.json();if(!r.ok)throw new Error(d.error);msg.textContent=`✅ Đã thêm “${d.title}” (${d.count} câu)`;draftQuestions=[];updateDraft();await loadBank();}catch(e){msg.textContent='⚠️ '+e.message;}};
+$('#parseImage').onclick=async()=>{const file=$('#examImage').files[0],subject=$('#mSubj').value.trim(),title=$('#mTitle').value.trim();if(!file)return alert('Chọn hoặc chụp ảnh đề trước.');if(!subject)return alert('Nhập môn học trước.');if(file.size>7*1024*1024)return alert('Ảnh quá lớn, hãy chọn ảnh dưới 7 MB.');const msg=$('#mMsg');msg.textContent='⏳ AI đang đọc ảnh và thêm đề...';try{const image=await fileToDataURL(file);const r=await api('/api/exams/from-image',{subject,title,image});const d=await r.json();if(!r.ok)throw new Error(d.error);msg.textContent=`✅ Đã nhận dạng và thêm “${d.title}” (${d.count} câu). Hãy kiểm tra nội dung.`;await loadBank();$('#examImage').value='';}catch(e){msg.textContent='⚠️ '+e.message;}};
 
 /* ---------- AI tạo đề ---------- */
 $('#gen').onclick = async () => {

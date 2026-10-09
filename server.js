@@ -1,5 +1,5 @@
 // Chạy bằng start.bat để tự nạp .env và dùng Gemini 2.5 Flash.
-// Tài khoản đăng ký ĐẦU TIÊN sẽ là Giáo viên; các tài khoản sau là Học sinh.
+// Tất cả tài khoản đều bình đẳng; không có vai trò giáo viên/người quản trị.
 //           SESSION_SECRET=chuỗi-bí-mật (không bắt buộc, mặc định tự sinh và lưu)
 const express = require('express');
 const http = require('http');
@@ -109,7 +109,7 @@ app.get('/api/health', (req, res) => {
 const loadUsers = () => { try { return JSON.parse(fs.readFileSync(USERS, 'utf8')); } catch { return {}; } };
 const saveUsers = u => fs.writeFileSync(USERS, JSON.stringify(u, null, 2));
 const hash = (pw, salt) => crypto.scryptSync(pw, salt, 64).toString('hex');
-const pub = (username, u) => ({ username, name: u.name, role: u.role });
+const pub = (username, u) => ({ username, name: u.name, role: 'member' });
 
 function sign(username) {
   const p = Buffer.from(JSON.stringify({ u: username, exp: Date.now() + 7 * 864e5 })).toString('base64url');
@@ -145,11 +145,9 @@ app.post('/api/register', (req, res) => {
   if (!name) return res.status(400).json({ error: 'Vui lòng nhập họ tên' });
   const users = loadUsers();
   if (users[username]) return res.status(409).json({ error: 'Tên đăng nhập đã tồn tại' });
-  // Dùng nội bộ: không cần mã giáo viên. Tài khoản đầu tiên là giáo viên,
-  // các tài khoản đăng ký sau là học sinh.
-  const isTeacher = Object.keys(users).length === 0;
+  // Không phân quyền giáo viên; tất cả tài khoản đều là thành viên bình đẳng.
   const salt = crypto.randomBytes(16).toString('hex');
-  users[username] = { name, salt, hash: hash(password, salt), role: isTeacher ? 'teacher' : 'student', created: Date.now(), settings: { ...DEFAULT_SETTINGS } };
+  users[username] = { name, salt, hash: hash(password, salt), role: 'member', created: Date.now(), settings: { ...DEFAULT_SETTINGS } };
   saveUsers(users);
   res.json({ token: sign(username), user: pub(username, users[username]) });
 });
@@ -193,48 +191,99 @@ app.post('/api/chat', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Mọi tài khoản đã đăng nhập đều có thể đóng góp đề vào kho tự luyện.
+// Kho đề dùng ID ổn định và username người đăng để kiểm tra quyền ở máy chủ.
+function readExamDB() {
+  try { const db = JSON.parse(fs.readFileSync(EXAMS, 'utf8')); db.subjects ||= []; return db; }
+  catch { return { subjects: [] }; }
+}
+function writeExamDB(db) { fs.mkdirSync(path.dirname(EXAMS), { recursive: true }); fs.writeFileSync(EXAMS, JSON.stringify(db, null, 2)); }
+function normalizeExam(exam, user) {
+  if (!exam || !String(exam.title || '').trim() || !Array.isArray(exam.questions) || !exam.questions.length) throw new Error('Đề cần có tiêu đề và ít nhất một câu hỏi');
+  if (exam.questions.length > 50) throw new Error('Tối đa 50 câu mỗi đề');
+  const questions = exam.questions.map((q, i) => {
+    const type = ['choice','truefalse','short','essay'].includes(q.type) ? q.type : (Array.isArray(q.options) && q.options.length ? 'choice' : 'essay');
+    const item = { type, q: String(q.q || '').trim().slice(0, 8000), explain: String(q.explain || '').slice(0, 4000) };
+    if (!item.q) throw new Error(`Câu ${i+1} chưa có nội dung`);
+    if (type === 'choice') {
+      if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 8) throw new Error(`Câu ${i+1}: trắc nghiệm cần 2–8 đáp án`);
+      item.options = q.options.map(x => String(x).slice(0, 2000));
+      item.answer = Number.isInteger(+q.answer) && +q.answer >= 0 && +q.answer < item.options.length ? +q.answer : null;
+    } else if (type === 'truefalse') {
+      item.options = ['Đúng','Sai']; item.answer = q.answer === 0 || q.answer === '0' || q.answer === true ? 0 : (q.answer === 1 || q.answer === '1' || q.answer === false ? 1 : null);
+    } else {
+      item.answerText = String(q.answerText || '');
+    }
+    return item;
+  });
+  return { id: crypto.randomUUID(), title: String(exam.title).trim().slice(0, 160), questions, createdBy: user.name, createdByUsername: user.username, createdAt: Date.now() };
+}
 app.post('/api/exams', auth, (req, res) => {
   try {
     const { subject, exam } = req.body || {};
-    if (!subject || !exam || !exam.title || !Array.isArray(exam.questions) || !exam.questions.length) return res.status(400).json({ error: 'Đề chưa đủ môn, tiêu đề hoặc câu hỏi' });
-    if (exam.questions.length > 50) return res.status(400).json({ error: 'Tối đa 50 câu mỗi đề' });
-    const normalized = { title: String(exam.title).trim().slice(0, 160), questions: exam.questions.map((q, i) => {
-      if (!q || !q.q || !Array.isArray(q.options) || q.options.length !== 4 || !Number.isInteger(+q.answer) || +q.answer < 0 || +q.answer > 3) throw new Error(`Câu ${i+1} không hợp lệ`);
-      return { q: String(q.q), options: q.options.map(x => String(x)), answer: +q.answer, explain: String(q.explain || '') };
-    }), createdBy: req.user.name, createdAt: Date.now() };
-    let db = { subjects: [] };
-    try { db = JSON.parse(fs.readFileSync(EXAMS, 'utf8')); } catch {}
-    db.subjects ||= [];
+    if (!String(subject || '').trim()) return res.status(400).json({ error: 'Nhập tên môn học' });
+    const normalized = normalizeExam(exam, req.user);
+    const db = readExamDB();
     let sub = db.subjects.find(x => String(x.name).toLowerCase() === String(subject).trim().toLowerCase());
-    if (!sub) { sub = { name: String(subject).trim().slice(0, 80), exams: [] }; db.subjects.push(sub); }
-    sub.exams ||= []; sub.exams.push(normalized);
-    fs.mkdirSync(path.dirname(EXAMS), { recursive: true });
-    fs.writeFileSync(EXAMS, JSON.stringify(db, null, 2));
-    res.json({ ok: true, title: normalized.title, count: normalized.questions.length });
+    if (!sub) { sub = { name: String(subject).trim().slice(0,80), exams: [] }; db.subjects.push(sub); }
+    sub.exams ||= []; sub.exams.push(normalized); writeExamDB(db);
+    res.json({ ok: true, id: normalized.id, title: normalized.title, count: normalized.questions.length });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
-
-// AI tạo đề: mọi tài khoản đã đăng nhập đều có thể đóng góp.
+app.delete('/api/exams/:id', auth, (req, res) => {
+  const db = readExamDB();
+  for (const sub of db.subjects) {
+    const idx = (sub.exams || []).findIndex(e => e.id === req.params.id);
+    if (idx >= 0) {
+      const exam = sub.exams[idx];
+      if (!exam.createdByUsername || exam.createdByUsername !== req.user.username) return res.status(403).json({ error: 'Bạn chỉ có thể xóa đề do chính mình đăng.' });
+      sub.exams.splice(idx, 1); writeExamDB(db);
+      return res.json({ ok: true });
+    }
+  }
+  res.status(404).json({ error: 'Không tìm thấy đề hoặc đề cũ chưa có mã quản lý.' });
+});
+app.put('/api/exams/:id', auth, (req, res) => {
+  const db = readExamDB();
+  for (const sub of db.subjects) {
+    const idx = (sub.exams || []).findIndex(e => e.id === req.params.id);
+    if (idx >= 0) {
+      const old = sub.exams[idx];
+      if (!old.createdByUsername || old.createdByUsername !== req.user.username) return res.status(403).json({ error: 'Bạn chỉ có thể sửa đề do chính mình đăng.' });
+      try { const replacement = normalizeExam(req.body.exam, req.user); replacement.id = old.id; replacement.createdAt = old.createdAt; sub.exams[idx] = replacement; writeExamDB(db); return res.json({ ok: true }); }
+      catch (e) { return res.status(400).json({ error: e.message }); }
+    }
+  }
+  res.status(404).json({ error: 'Không tìm thấy đề.' });
+});
+app.post('/api/exams/from-image', auth, async (req, res) => {
+  try {
+    const { subject, title, image } = req.body || {};
+    if (!String(subject || '').trim() || !image) return res.status(400).json({ error: 'Nhập môn học và tải ảnh đề lên.' });
+    const m = String(image).match(/^data:(image\/(?:jpeg|png|webp));base64,([\s\S]+)$/);
+    if (!m) return res.status(400).json({ error: 'Ảnh phải là JPG, PNG hoặc WEBP.' });
+    if (m[2].length > 10_000_000) return res.status(413).json({ error: 'Ảnh quá lớn, hãy chọn ảnh nhỏ hơn.' });
+    const prompt = `Đọc nội dung ảnh đề học tập và chuyển thành JSON, không bịa phần bị mờ. Hãy giữ đúng ngôn ngữ/nội dung. Nếu không thấy đáp án thì answer để null. Hỗ trợ câu hỏi trắc nghiệm, đúng sai, trả lời ngắn và tự luận. JSON schema: {"title":"${String(title||'Đề từ ảnh').slice(0,120)}","questions":[{"type":"choice|truefalse|short|essay","q":"nội dung câu hỏi","options":["A","B"],"answer":0,"answerText":"","explain":""}]}. Với choice cần 2-8 options; truefalse có answer 0 hoặc 1; short/essay không cần options. Tối đa 50 câu. Chỉ trả JSON.`;
+    const raw = await gemini({ contents: [{ role:'user', parts:[{text:prompt},{inlineData:{mimeType:m[1],data:m[2]}}] }], generationConfig:{responseMimeType:'application/json'} });
+    const exam = JSON.parse(raw); exam.title = String(title || exam.title || 'Đề từ ảnh');
+    const normalized = normalizeExam(exam, req.user); const db = readExamDB();
+    let sub = db.subjects.find(x => String(x.name).toLowerCase() === String(subject).trim().toLowerCase());
+    if (!sub) { sub = { name:String(subject).trim().slice(0,80), exams:[] }; db.subjects.push(sub); }
+    sub.exams.push(normalized); writeExamDB(db);
+    res.json({ok:true,title:normalized.title,count:normalized.questions.length,id:normalized.id});
+  } catch (e) { res.status(500).json({error:'Không đọc được đề từ ảnh: '+e.message}); }
+});
 app.post('/api/generate-exam', auth, async (req, res) => {
   try {
     const { subject, topic, count = 5 } = req.body;
     if (!subject || !topic) return res.status(400).json({ error: 'Thiếu môn hoặc chủ đề' });
     const n = Math.min(Math.max(+count || 5, 1), 20);
-    const prompt = `Hãy soạn đề ôn trắc nghiệm gồm ${n} câu, môn "${subject}", chủ đề "${topic}", mức độ phù hợp học sinh phổ thông, mỗi câu có đúng 4 đáp án. Mọi công thức toán/lý/hóa viết bằng LaTeX trong $...$. Trả về JSON đúng dạng: {"title": string, "questions": [{"q": string, "options": [string,string,string,string], "answer": số từ 0 đến 3, "explain": string}]}`;
-    const raw = await gemini({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json' },
-    });
-    const exam = JSON.parse(raw);
-    if (!exam.questions?.length) throw new Error('AI trả về đề rỗng, thử lại');
-    const db = JSON.parse(fs.readFileSync(EXAMS, 'utf8'));
-    let s = db.subjects.find(x => x.name.toLowerCase() === subject.trim().toLowerCase());
-    if (!s) { s = { name: subject.trim(), exams: [] }; db.subjects.push(s); }
-    exam.createdBy = req.user.name; exam.createdAt = Date.now();
-    s.exams.push(exam);
-    fs.writeFileSync(EXAMS, JSON.stringify(db, null, 2));
-    res.json({ ok: true, title: exam.title, count: exam.questions.length });
+    const prompt = `Soạn đề ôn tập môn ${subject}, chủ đề ${topic}, gồm ${n} câu trắc nghiệm. Trả về JSON: {"title":string,"questions":[{"type":"choice","q":string,"options":[string,string,string,string],"answer":0,"explain":string}]}. Viết tất cả công thức toán bằng LaTeX có dấu phân cách $...$ hoặc $$...$$. Dùng \\sqrt{...} cho căn, \\frac{...}{...} cho phân số, ^ cho số mũ. Ví dụ: $\\sqrt{49}$, $\\frac{3}{4}$, $x^2$. Không để dấu LaTeX trần.`;
+    const raw = await gemini({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json' } });
+    const exam = normalizeExam(JSON.parse(raw), req.user); const db = readExamDB();
+    let sub = db.subjects.find(x => x.name.toLowerCase() === subject.trim().toLowerCase());
+    if (!sub) { sub = { name: subject.trim(), exams: [] }; db.subjects.push(sub); }
+    sub.exams.push(exam); writeExamDB(db);
+    res.json({ ok: true, id: exam.id, title: exam.title, count: exam.questions.length });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
