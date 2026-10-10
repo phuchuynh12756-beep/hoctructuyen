@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lớp học trực tuyến</title>
+<meta name="theme-color" content="#6257e8">
+<title>Lớp học AI · Học tập & kết nối</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
@@ -36,6 +37,12 @@ input,select,textarea{padding:9px;border:1px solid #cfd5e3;border-radius:8px;fon
 .q{margin:14px 0;padding:12px;border:1px solid #e1e5ef;border-radius:10px}.opt{display:block;padding:7px 10px;margin:4px 0;border-radius:8px;cursor:pointer;border:1px solid #e1e5ef}
 .opt.ok{background:#dcfce7;border-color:#16a34a}.opt.bad{background:#fee2e2;border-color:#dc2626}.ex{margin-top:8px;font-size:14px;color:#374151}
 
+/* Bạn bè và tin nhắn */
+.social-layout{display:grid;grid-template-columns:minmax(250px,340px) minmax(0,1fr);gap:12px;align-items:stretch}
+.social-side{min-width:0}.social-side h3{font-size:15px;margin:18px 0 8px}.my-id{padding:10px;background:#eef2ff;border-radius:10px}.my-id small{color:#4b5563}.my-id strong{font-size:18px;letter-spacing:.5px}
+.social-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.social-person{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e5e7eb;border-radius:9px;min-width:0}.social-person .person-info{flex:1;min-width:0;overflow-wrap:anywhere}.social-person small{display:block;color:#6b7280;font-size:12px}.social-person button{white-space:nowrap;padding:7px 9px}
+.social-chat{padding:0;display:flex;flex-direction:column;min-height:65vh;min-width:0}.social-chat-head{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:14px;border-bottom:1px solid #e5e7eb}.social-messages{flex:1;min-height:300px;max-height:58vh;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:9px}.social-bubble{max-width:85%;padding:9px 12px;border-radius:13px;background:#eef0f8;overflow-wrap:anywhere;white-space:pre-wrap}.social-bubble.mine{align-self:flex-end;background:#4f46e5;color:#fff}.social-bubble.theirs{align-self:flex-start}.social-bubble small{display:block;opacity:.7;font-size:10px;margin-top:5px}.social-attachment{display:block;margin-top:6px;padding:8px;border-radius:8px;background:#0000000c;color:inherit;text-decoration:underline;cursor:pointer;border:0;overflow-wrap:anywhere;text-align:left}.social-compose{border-top:1px solid #e5e7eb;padding:10px;display:flex;flex-direction:column;gap:8px}.social-compose textarea{width:100%;resize:vertical;min-height:44px}.social-empty{color:#6b7280;text-align:center;padding:22px}
+@media(max-width:760px){.social-layout{grid-template-columns:1fr}.social-chat{min-height:60vh}.social-messages{max-height:48vh;min-height:240px}.social-side{order:0}.social-chat{order:1}.social-person{flex-wrap:wrap}}
 /* Authentication form: ensure inputs remain real, focusable, and above the overlay. */
 .auth-overlay{position:fixed;inset:0;background:#f4f6fb;z-index:200;display:none;align-items:center;justify-content:center;pointer-events:auto}
 .auth-overlay.on{display:flex}
@@ -48,6 +55,29 @@ input,select,textarea{padding:9px;border:1px solid #cfd5e3;border-radius:8px;fon
 @media(max-width:700px){header{padding:8px;gap:5px}header h1{width:100%;font-size:19px}.tab{flex:1;padding:9px 6px;font-size:12px;min-width:0}#me{width:100%;margin-left:0!important}main{margin:10px auto;padding:0 8px}.card{padding:12px}.row>*{max-width:100%}input,select,textarea{min-width:0;max-width:100%}#ctrl .btn{flex:1;min-width:42%;padding:10px 7px}#grid{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}#aiMain{height:68dvh}.q{padding:10px}#bank .row select{flex:1;min-width:0;width:100%}.exam-tools{display:flex;gap:8px;flex-wrap:wrap}.exam-tools button{flex:1}.builder-grid{display:grid;grid-template-columns:1fr;gap:8px}.builder-grid input,.builder-grid select,.builder-grid textarea{width:100%}}
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #818cf8;outline-offset:2px}
 
+
+/* ===== GIAO DIỆN MỚI: hiện đại, đồng bộ, responsive ===== */
+:root{--brand:#6257e8;--brand2:#8b5cf6;--ink:#182238;--muted:#718096;--line:#e5e9f4;--surface:#fff;--soft:#f4f5ff;--shadow:0 14px 36px rgba(32,43,85,.08)}
+html{scroll-behavior:smooth}body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 10% 0%,#e9eaff 0,transparent 35%),radial-gradient(ellipse at 95% 12%,#e6f5ff 0,transparent 28%),#f6f7fc;color:var(--ink);line-height:1.5;min-height:100vh}
+header{position:sticky;top:0;z-index:80;padding:12px clamp(12px,3vw,34px);gap:8px;background:rgba(255,255,255,.88);backdrop-filter:blur(18px);border-bottom:1px solid rgba(220,225,242,.9);box-shadow:0 5px 24px #27356808}
+header h1{font-size:19px;font-weight:850;letter-spacing:-.5px;margin-right:14px;white-space:nowrap;color:#27235e}header h1:before{content:"";display:inline-block;vertical-align:middle;width:8px;height:25px;border-radius:9px;background:linear-gradient(180deg,var(--brand2),#36b8ed);margin-right:10px}
+.tab{font-weight:650;color:#65708a;padding:9px 13px;border-radius:11px;transition:background .18s,color .18s,transform .18s;white-space:nowrap}.tab:hover{background:#f0f1ff;color:var(--brand);transform:translateY(-1px)}.tab.on{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 6px 16px #6257e83a}
+#me{color:#5e6680;font-weight:600}main{max-width:1320px;margin:24px auto;padding:0 clamp(12px,2vw,26px) 42px}section{animation:sectionIn .22s ease-out}section:not(.on){display:none}@keyframes sectionIn{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.94);border:1px solid rgba(226,230,244,.9);border-radius:20px;padding:clamp(14px,2vw,24px);box-shadow:var(--shadow)}.card h2{letter-spacing:-.5px;color:#24264d}.card h3{color:#303653}
+button,.btn{font-family:inherit;font-weight:700;transition:transform .16s,box-shadow .16s,background .16s,border-color .16s}.btn{border:1px solid transparent;background:linear-gradient(135deg,var(--brand),var(--brand2));border-radius:11px;padding:10px 15px;box-shadow:0 5px 12px #6257e81b}.btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px #6257e82b}.btn:active{transform:translateY(0)}.btn.gray{background:#f1f3fa;color:#46516c;border-color:#e4e8f3;box-shadow:none}.btn.gray:hover{background:#e9ecfb;border-color:#d9def7}.btn.red{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}.row{gap:10px}
+input,select,textarea{background:#fff;color:#1e293b;border:1px solid #dce2f0;border-radius:11px;padding:11px 12px;box-shadow:0 1px 2px #1c285008;transition:border-color .15s,box-shadow .15s}input::placeholder,textarea::placeholder{color:#9aa4b8}input:focus,select:focus,textarea:focus{border-color:#938cf4;box-shadow:0 0 0 4px #766bf21a;outline:none}input[type=file]{padding:8px;background:#fafbff}
+#room .card,#bank>.card{overflow:hidden}#lobby,#ctrl{padding:14px;background:linear-gradient(135deg,#f7f7ff,#f2f8ff);border:1px solid #e8eafa;border-radius:15px}#roomTag{padding:7px 11px;border-radius:9px;background:#e8eaff;color:#4b43bd}#grid{gap:14px}.tile{border-radius:17px;box-shadow:0 8px 22px #1112;border:1px solid #252b43}.tile span{background:#111b32d9;backdrop-filter:blur(8px);padding:5px 10px;border-radius:8px}
+#aiMain{border-radius:18px;overflow:hidden}#bubble{background:linear-gradient(135deg,#6257e8,#8b5cf6);box-shadow:0 12px 28px #6257e84a;border:3px solid #ffffffb8;transition:transform .2s}#bubble:hover{transform:translateY(-3px) scale(1.03)}#pop{border:1px solid #e5e7f5;border-radius:20px;box-shadow:0 20px 60px #18234b30}
+#bank details{background:#fafbff;border:1px solid #e7eaf5;border-radius:14px;padding:13px 15px}#bank summary{color:#4038a7}#bank hr{border-color:#e8eaf3!important}.builder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.builder-grid>*{min-width:0}.builder-grid textarea{width:100%}#quiz{margin-top:18px}.q{border:1px solid #e4e8f3;border-radius:15px;background:#fff;padding:17px;box-shadow:0 5px 16px #27356808}.opt{border-radius:10px;background:#fafbff;border-color:#e2e7f2;transition:background .15s,border-color .15s}.opt:hover{background:#f1f0ff;border-color:#b7b2ff}
+.settings-grid{gap:16px}.setting{background:#fafbff;border:1px solid #e9edf7;border-radius:14px;padding:13px}.theme-preview{border-radius:14px}
+/* Chat / danh sách bạn bè */
+.social-layout{grid-template-columns:minmax(270px,340px) minmax(0,1fr);gap:16px;min-height:calc(100vh - 170px)}.social-side{border-radius:20px;box-shadow:var(--shadow)}.social-side h2{font-size:22px;letter-spacing:-.6px}.my-id{background:linear-gradient(135deg,#f0efff,#eaf6ff);border:1px solid #dedfff;border-radius:15px;padding:14px}.my-id small{font-weight:650;color:#6a6b93}.my-id strong{color:#4b43bd;font-size:19px;letter-spacing:1px}.social-side h3{color:#4b5570;margin-top:22px}.social-list{gap:8px}.social-person{padding:11px;border:1px solid #e7eaf4;border-radius:13px;background:#fff;transition:transform .15s,border-color .15s,background .15s}.social-person:hover{transform:translateY(-1px);border-color:#c9c5ff;background:#fcfbff}.social-person .person-info{font-weight:700;color:#29324a}.social-person small{font-weight:500;color:#8a94a9;margin-top:2px}.social-person button{border-radius:9px}
+.social-chat{min-height:calc(100vh - 170px);height:calc(100vh - 170px);max-height:900px;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);border:1px solid #e3e8f4;background:#fff}.social-chat-head{padding:17px 20px;background:rgba(255,255,255,.97);border-bottom:1px solid #edf0f7;min-height:76px}.social-chat-head strong,.social-chat-head h3{font-size:17px;color:#252b47;margin:0}.social-messages{flex:1;min-height:0;max-height:none;padding:22px clamp(12px,2.5vw,28px);gap:13px;background:linear-gradient(180deg,#fbfcff,#f8f9ff)}.social-bubble{max-width:min(78%,560px);padding:11px 15px;border-radius:17px 17px 17px 5px;background:#fff;border:1px solid #e8ebf5;box-shadow:0 3px 10px #27356808;line-height:1.55;font-size:14.5px}.social-bubble.mine{border:0;border-radius:17px 17px 5px 17px;background:linear-gradient(135deg,#6559e9,#7965ee);color:#fff;box-shadow:0 5px 15px #6257e82a}.social-bubble small{margin-top:7px;font-size:10px;opacity:.72}.social-bubble img{max-width:min(280px,100%);max-height:300px;object-fit:contain;border-radius:12px}.social-attachment{display:flex;align-items:center;gap:8px;margin-top:9px;padding:11px 13px;background:#f1f2ff;border:1px solid #e1e1ff;border-radius:12px;text-decoration:none;font-weight:650;color:#4b43bd;overflow-wrap:anywhere}.social-bubble.mine .social-attachment{background:#ffffff20;border-color:#ffffff35;color:#fff}.social-compose{padding:13px 15px;background:#fff;border-top:1px solid #edf0f7;gap:10px}.social-compose textarea{min-height:48px;max-height:130px;border-radius:15px;background:#fafbff;padding:13px 15px}.social-empty{margin:auto;color:#8791a8;background:#fff;border:1px dashed #dce2f0;border-radius:16px;max-width:380px}
+.auth-overlay{background:radial-gradient(ellipse at 15% 10%,#e5e7ff,transparent 40%),radial-gradient(ellipse at 90% 85%,#dcf4ff,transparent 36%),#f7f8ff}.auth-card{padding:28px!important;border:1px solid #e5e7f4;border-radius:24px!important;box-shadow:0 24px 80px #242c6420!important}.auth-card h1,.auth-card h2{letter-spacing:-.8px;color:#2c286e}.auth-fields{gap:12px}.auth-fields input{border-radius:12px;padding:12px}
+@media(max-width:900px){header{position:relative}.social-layout{grid-template-columns:1fr;min-height:0}.social-chat{height:70vh;min-height:520px}.social-messages{min-height:0}.social-side{order:0}.social-chat{order:1}}
+@media(max-width:700px){header{padding:10px;gap:6px}header h1{font-size:18px;margin:0 0 3px}header h1:before{height:20px;margin-right:7px}.tab{font-size:12px;padding:9px 7px;border-radius:9px}main{margin:12px auto;padding:0 9px 30px}.card{border-radius:16px;padding:13px}.builder-grid{grid-template-columns:1fr}.social-layout{gap:12px}.social-chat{height:72dvh;min-height:480px;border-radius:16px}.social-chat-head{padding:12px}.social-messages{padding:12px 10px;gap:10px}.social-bubble{max-width:90%;padding:10px 12px;font-size:14px}.social-compose{padding:10px}.social-person{padding:9px}.my-id strong{font-size:16px}.social-side h2{font-size:20px}.btn{padding:10px 12px}.social-compose .row>*{flex:1}.social-compose input[type=file]{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -56,6 +86,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
   <button class="tab on" data-t="room">Lớp học</button>
   <button class="tab" data-t="teacher">Giáo viên AI</button>
   <button class="tab" data-t="bank">Kho bài tự luyện & đề ôn</button>
+  <button class="tab" data-t="social">💬 Bạn bè & tin nhắn</button>
   <button class="tab" data-t="settings">⚙️ Cài đặt</button>
   <span id="me" style="margin-left:auto;font-size:14px"></span>
 </header>
@@ -124,6 +155,32 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
       <div id="quiz"></div>
     </div>
   </section>
+  <!-- BẠN BÈ & TIN NHẮN -->
+  <section id="social">
+    <div class="social-layout">
+      <aside class="card social-side">
+        <h2 style="margin-top:0">💬 Bạn bè</h2>
+        <div class="my-id"><small>ID của bạn</small><div class="row"><strong id="mySocialId">Đang tải...</strong><button class="btn gray" id="copyMyId">Sao chép</button></div></div>
+        <p style="font-size:13px;color:#6b7280">Chia sẻ ID để người khác tìm bạn.</p>
+        <div class="row"><input id="friendSearch" placeholder="Tìm theo ID hoặc tên" style="width:100%;flex:1"><button class="btn" id="searchFriend">Tìm</button></div>
+        <div id="friendSearchResults" class="social-list"></div>
+        <h3>📩 Lời mời kết bạn</h3><div id="friendRequests" class="social-list"></div>
+        <h3>👥 Danh sách bạn bè</h3><div id="friendList" class="social-list"></div>
+        <h3>🕘 Trò chuyện gần đây</h3><div id="conversationList" class="social-list"></div>
+      </aside>
+      <div class="card social-chat">
+        <div class="social-chat-head"><div><b id="chatTitle">Chọn một người bạn</b><div id="chatSub" style="font-size:12px;color:#6b7280"></div></div><button class="btn gray" id="refreshSocial">↻ Làm mới</button></div>
+        <div id="socialMessages" class="social-messages"><p style="color:#6b7280;text-align:center">Kết bạn với bạn học để bắt đầu trò chuyện.</p></div>
+        <div class="social-compose">
+          <textarea id="socialText" rows="2" placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)" disabled></textarea>
+          <div class="row"><input id="socialFile" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,.avif,.tif,.tiff,.heic,.heif,.ico,.svg,.pdf,.txt,.csv,.doc,.docx,.docm,.dot,.dotx,.ppt,.pptx,.pptm,.pps,.ppsx,.xls,.xlsx,.xlsm,.xlsb,.xltx,.odt,.ods,.odp,.rtf,image/png,image/jpeg,image/gif,image/webp,image/bmp,application/pdf" hidden>
+            <button class="btn gray" id="attachSocial" disabled>📎 Gửi tệp</button><span id="socialFileName" style="font-size:12px;color:#6b7280;flex:1"></span><button class="btn" id="sendSocial" disabled>Gửi ➤</button>
+          </div>
+          <small style="color:#6b7280">Ảnh và tài liệu văn phòng phổ biến; tối đa 8 MB/tệp.</small>
+        </div>
+      </div>
+    </div>
+  </section>
   <!-- CÀI ĐẶT -->
   <section id="settings">
     <div class="card">
@@ -183,6 +240,7 @@ async function loadSettings(){ try{const r=await fetch('/api/settings',{headers:
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('section').forEach(x => x.classList.toggle('on', x.id === b.dataset.t));
+  if (b.dataset.t === 'social') setTimeout(() => loadSocial().catch(e => socialNotice(e.message)), 0);
 });
 
 /* ---------- Markdown + KaTeX ---------- */
@@ -453,6 +511,109 @@ $('#gen').onclick = async () => {
   } catch (e) { msg.textContent = '⚠️ ' + e.message; }
   b.disabled = false;
 };
+
+/* ---------- Bạn bè và tin nhắn ---------- */
+let socialState = null, activeFriend = null, activeMessagesKey = '', socialFile = null, socialPollBusy = false;
+function socialNotice(message) { const box = $('#friendSearchResults'); if (box) box.textContent = message; }
+function safeTime(ts) { try { return new Date(ts).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}); } catch { return ''; } }
+async function socialFetch(url, options={}) {
+  const headers = { Authorization:'Bearer '+token, ...(options.headers||{}) };
+  const r = await fetch(url,{...options,headers});
+  const d = await r.json().catch(()=>({error:'Phản hồi máy chủ không hợp lệ'}));
+  if (!r.ok) throw new Error(d.error||'Có lỗi xảy ra');
+  return d;
+}
+function personCard(u, buttonLabel, action, extra='') {
+  const el=document.createElement('div');el.className='social-person';
+  const info=document.createElement('div');info.className='person-info';
+  const strong=document.createElement('strong');strong.textContent=u.name||u.username;info.appendChild(strong);
+  const small=document.createElement('small');small.textContent=(u.id||'')+' · @'+(u.username||'');info.appendChild(small);el.appendChild(info);
+  if(buttonLabel){const b=document.createElement('button');b.className='btn '+(extra||'gray');b.textContent=buttonLabel;b.onclick=()=>action(u);el.appendChild(b);}
+  return el;
+}
+async function loadSocial() {
+  if(!token)return;
+  const d=await socialFetch('/api/social');socialState=d;
+  $('#mySocialId').textContent=d.me.id||'Chưa có ID';
+  $('#friendList').replaceChildren();
+  if(!d.friends.length) $('#friendList').innerHTML='<small style="color:#6b7280">Chưa có bạn bè.</small>';
+  d.friends.forEach(u=>$('#friendList').appendChild(personCard(u,'Nhắn tin',()=>selectSocialFriend(u),'btn')));
+  $('#friendRequests').replaceChildren();
+  if(!d.incoming.length) $('#friendRequests').innerHTML='<small style="color:#6b7280">Không có lời mời mới.</small>';
+  d.incoming.forEach(r=>{
+    const el=personCard(r.user,'',null);const actions=document.createElement('div');actions.className='row';
+    for(const [label,accept] of [['Đồng ý',true],['Từ chối',false]]){const b=document.createElement('button');b.className='btn '+(accept?'':'gray');b.textContent=label;b.onclick=async()=>{try{await socialFetch('/api/friends/respond',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:r.id,accept})});await loadSocial();}catch(e){alert(e.message);}};actions.appendChild(b);}
+    el.appendChild(actions);$('#friendRequests').appendChild(el);
+  });
+  $('#conversationList').replaceChildren();
+  if(!d.conversations.length) $('#conversationList').innerHTML='<small style="color:#6b7280">Chưa có cuộc trò chuyện.</small>';
+  d.conversations.forEach(c=>{const el=personCard(c.user,'Mở',()=>selectSocialFriend(c.user),'gray');const sm=document.createElement('small');sm.textContent=c.lastMessage+' · '+safeTime(c.createdAt);el.querySelector('.person-info').appendChild(sm);$('#conversationList').appendChild(el);});
+  if(activeFriend && d.friends.some(u=>u.username===activeFriend.username)) await loadSocialMessages(false);
+}
+$('#copyMyId').onclick=()=>{if(!socialState?.me?.id)return; navigator.clipboard?.writeText(socialState.me.id).then(()=>alert('Đã sao chép ID '+socialState.me.id)).catch(()=>prompt('Sao chép ID này:',socialState.me.id));};
+$('#searchFriend').onclick=async()=>{
+  const q=$('#friendSearch').value.trim(),box=$('#friendSearchResults');box.replaceChildren();
+  if(q.length<2){box.textContent='Nhập ít nhất 2 ký tự để tìm.';return;}
+  try{const d=await socialFetch('/api/users/search?q='+encodeURIComponent(q));if(!d.users.length){box.textContent='Không tìm thấy người dùng.';return;}
+    d.users.forEach(u=>box.appendChild(personCard(u,'Kết bạn',async target=>{try{const r=await socialFetch('/api/friends/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:target.id})});alert(r.message);await loadSocial();}catch(e){alert(e.message);}},'btn')));
+  }catch(e){box.textContent='⚠️ '+e.message;}
+};
+$('#friendSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#searchFriend').click();}});
+$('#refreshSocial').onclick=()=>loadSocial().catch(e=>alert(e.message));
+async function selectSocialFriend(u) {
+  activeFriend=u;activeMessagesKey='';
+  $('#chatTitle').textContent=u.name||u.username;$('#chatSub').textContent=(u.id||'')+' · @'+u.username;
+  $('#socialText').disabled=false;$('#sendSocial').disabled=false;$('#attachSocial').disabled=false;
+  await loadSocialMessages(true);
+}
+async function loadSocialMessages(force) {
+  if(!activeFriend||socialPollBusy)return;
+  socialPollBusy=true;
+  try{
+    const d=await socialFetch('/api/messages/'+encodeURIComponent(activeFriend.username));
+    const key=d.messages.map(m=>m.id).join('|');
+    if(force||key!==activeMessagesKey){
+      activeMessagesKey=key;const root=$('#socialMessages');root.replaceChildren();
+      if(!d.messages.length){root.innerHTML='<div class="social-empty">Chưa có tin nhắn. Hãy gửi lời chào đầu tiên 👋</div>';}
+      d.messages.forEach(m=>{
+        const mine=m.from===socialState?.me?.username;const b=document.createElement('div');b.className='social-bubble '+(mine?'mine':'theirs');
+        if(m.text){const t=document.createElement('div');t.textContent=m.text;b.appendChild(t);}
+        if(m.attachment){const a=document.createElement('button');a.className='social-attachment';a.textContent=(m.attachment.image?'🖼️ ':'📎 ')+m.attachment.name+' ('+(m.attachment.size/1024).toFixed(0)+' KB)';a.onclick=()=>openSocialFile(m.attachment);b.appendChild(a);}
+        const time=document.createElement('small');time.textContent=safeTime(m.createdAt);b.appendChild(time);root.appendChild(b);
+      });
+      root.scrollTop=root.scrollHeight;
+    }
+  }catch(e){if(e.message.includes('Chỉ bạn bè')){activeFriend=null;$('#chatTitle').textContent='Chọn một người bạn';$('#chatSub').textContent='';$('#socialMessages').textContent=e.message;}}
+  finally{socialPollBusy=false;}
+}
+async function openSocialFile(f){
+  try{const r=await fetch('/api/files/'+encodeURIComponent(f.id),{headers:{Authorization:'Bearer '+token}});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||'Không tải được tệp');}
+    const blob=await r.blob(),url=URL.createObjectURL(blob);
+    if(f.image){const w=window.open(url,'_blank','noopener');if(!w){const a=document.createElement('a');a.href=url;a.download=f.name;a.click();}}
+    else{const a=document.createElement('a');a.href=url;a.download=f.name;document.body.appendChild(a);a.click();a.remove();}
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){alert(e.message);}
+}
+function resetSocialFile(){socialFile=null;$('#socialFile').value='';$('#socialFileName').textContent='';}
+$('#attachSocial').onclick=()=>$('#socialFile').click();
+$('#socialFile').onchange=()=>{const f=$('#socialFile').files[0];if(!f){resetSocialFile();return;}if(f.size>8*1024*1024){alert('Tệp tối đa 8 MB.');resetSocialFile();return;}socialFile=f;$('#socialFileName').textContent=f.name;};
+async function sendSocialMessage(){
+  if(!activeFriend)return;
+  const text=$('#socialText').value.trim();if(!text&&!socialFile)return;
+  const b=$('#sendSocial');b.disabled=true;
+  try{
+    let file=null;
+    if(socialFile)file={name:socialFile.name,mime:socialFile.type||'application/octet-stream',data:await fileToDataURL(socialFile)};
+    await socialFetch('/api/messages/'+encodeURIComponent(activeFriend.username),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,file})});
+    $('#socialText').value='';resetSocialFile();activeMessagesKey='';await loadSocialMessages(true);await loadSocial();
+  }catch(e){alert(e.message);}
+  finally{b.disabled=!activeFriend;}
+}
+$('#sendSocial').onclick=sendSocialMessage;
+$('#socialText').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendSocialMessage();}});
+setInterval(()=>{if($('#social')?.classList.contains('on')&&token){loadSocial().catch(()=>{});}},10000);
+setInterval(()=>{if($('#social')?.classList.contains('on')&&activeFriend&&token)loadSocialMessages(false);},3000);
+
 </script>
 </body>
 </html>

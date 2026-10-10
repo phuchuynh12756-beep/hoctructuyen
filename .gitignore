@@ -3,3 +3,5 @@ node_modules/
 *.log
 data/users.json
 data/secret.txt
+data/social.json
+data/uploads/

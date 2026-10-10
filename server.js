@@ -106,10 +106,27 @@ app.get('/api/health', (req, res) => {
 });
 
 /* ---------- Tài khoản ---------- */
-const loadUsers = () => { try { return JSON.parse(fs.readFileSync(USERS, 'utf8')); } catch { return {}; } };
+const loadUsers = () => {
+  let users;
+  try { users = JSON.parse(fs.readFileSync(USERS, 'utf8')); } catch { users = {}; }
+  // Tự cấp ID cho tài khoản cũ chưa có ID, không làm mất dữ liệu hiện có.
+  let changed = false;
+  const used = new Set(Object.values(users).map(u => u.id).filter(Boolean));
+  for (const [username, u] of Object.entries(users)) {
+    if (!u.id) {
+      let id;
+      do { id = 'HV-' + crypto.randomBytes(3).toString('hex').toUpperCase(); } while (used.has(id));
+      u.id = id; used.add(id); changed = true;
+    }
+  }
+  if (changed) {
+    try { fs.writeFileSync(USERS, JSON.stringify(users, null, 2)); } catch (e) { console.warn('Không lưu được ID người dùng:', e.message); }
+  }
+  return users;
+};
 const saveUsers = u => fs.writeFileSync(USERS, JSON.stringify(u, null, 2));
 const hash = (pw, salt) => crypto.scryptSync(pw, salt, 64).toString('hex');
-const pub = (username, u) => ({ username, name: u.name, role: 'member' });
+const pub = (username, u) => ({ username, name: u.name, id: u.id, role: 'member' });
 
 function sign(username) {
   const p = Buffer.from(JSON.stringify({ u: username, exp: Date.now() + 7 * 864e5 })).toString('base64url');
@@ -147,7 +164,10 @@ app.post('/api/register', (req, res) => {
   if (users[username]) return res.status(409).json({ error: 'Tên đăng nhập đã tồn tại' });
   // Không phân quyền giáo viên; tất cả tài khoản đều là thành viên bình đẳng.
   const salt = crypto.randomBytes(16).toString('hex');
-  users[username] = { name, salt, hash: hash(password, salt), role: 'member', created: Date.now(), settings: { ...DEFAULT_SETTINGS } };
+  let publicId;
+  const existingIds = new Set(Object.values(users).map(x => x.id).filter(Boolean));
+  do { publicId = 'HV-' + crypto.randomBytes(3).toString('hex').toUpperCase(); } while (existingIds.has(publicId));
+  users[username] = { id: publicId, name, salt, hash: hash(password, salt), role: 'member', created: Date.now(), settings: { ...DEFAULT_SETTINGS } };
   saveUsers(users);
   res.json({ token: sign(username), user: pub(username, users[username]) });
 });
@@ -170,6 +190,143 @@ app.put('/api/settings', auth, (req, res) => {
   users[req.user.username].settings = cleanSettings(req.body || {});
   saveUsers(users);
   res.json({ ok: true, settings: users[req.user.username].settings });
+});
+
+
+/* ---------- Kết bạn, nhắn tin và gửi tệp ---------- */
+const SOCIAL_FILE = path.join(DATA, 'social.json');
+const UPLOAD_DIR = path.join(DATA, 'uploads');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+function readSocial() {
+  try {
+    const d = JSON.parse(fs.readFileSync(SOCIAL_FILE, 'utf8'));
+    return { requests: Array.isArray(d.requests) ? d.requests : [], friendships: Array.isArray(d.friendships) ? d.friendships : [], messages: Array.isArray(d.messages) ? d.messages : [] };
+  } catch { return { requests: [], friendships: [], messages: [] }; }
+}
+function writeSocial(d) { fs.writeFileSync(SOCIAL_FILE, JSON.stringify(d, null, 2)); }
+function findUserById(id) {
+  const users = loadUsers();
+  for (const [username, u] of Object.entries(users)) if (u.id && u.id.toUpperCase() === String(id || '').trim().toUpperCase()) return { username, ...pub(username, u) };
+  return null;
+}
+function friendPair(a, b) { return [a, b].sort().join('|'); }
+function areFriends(db, a, b) { return db.friendships.some(f => friendPair(f.a, f.b) === friendPair(a, b)); }
+function publicUser(username) { const u = loadUsers()[username]; return u ? pub(username, u) : null; }
+app.get('/api/social', auth, (req, res) => {
+  const db = readSocial(), me = req.user.username;
+  const users = loadUsers();
+  const friends = db.friendships.filter(f => f.a === me || f.b === me).map(f => publicUser(f.a === me ? f.b : f.a)).filter(Boolean);
+  const incoming = db.requests.filter(r => r.to === me && r.status === 'pending').map(r => ({ ...r, user: publicUser(r.from) })).filter(r => r.user);
+  const outgoing = db.requests.filter(r => r.from === me && r.status === 'pending').map(r => ({ ...r, user: publicUser(r.to) })).filter(r => r.user);
+  const conversations = {};
+  for (const m of db.messages) {
+    if (m.from !== me && m.to !== me) continue;
+    const other = m.from === me ? m.to : m.from;
+    if (!conversations[other] || conversations[other].createdAt < m.createdAt) conversations[other] = { user: publicUser(other), lastMessage: m.text || (m.attachment ? '📎 ' + m.attachment.name : ''), createdAt: m.createdAt };
+  }
+  res.json({ me: req.user, friends, incoming, outgoing, conversations: Object.values(conversations).filter(c => c.user).sort((a,b) => b.createdAt-a.createdAt) });
+});
+app.get('/api/users/search', auth, (req, res) => {
+  const q = String(req.query.q || '').trim().toLowerCase();
+  if (q.length < 2) return res.json({ users: [] });
+  const users = loadUsers(), results = [];
+  for (const [username, u] of Object.entries(users)) {
+    if (username === req.user.username) continue;
+    if (String(u.id || '').toLowerCase().includes(q) || username.toLowerCase().includes(q) || String(u.name || '').toLowerCase().includes(q)) {
+      results.push(pub(username, u));
+      if (results.length >= 20) break;
+    }
+  }
+  res.json({ users: results });
+});
+app.post('/api/friends/request', auth, (req, res) => {
+  const target = findUserById(req.body.id);
+  if (!target) return res.status(404).json({ error: 'Không tìm thấy ID người dùng.' });
+  const me = req.user.username, to = target.username;
+  if (me === to) return res.status(400).json({ error: 'Bạn không thể kết bạn với chính mình.' });
+  const db = readSocial();
+  if (areFriends(db, me, to)) return res.status(409).json({ error: 'Hai bạn đã là bạn bè.' });
+  const pending = db.requests.find(r => r.from === me && r.to === to && r.status === 'pending');
+  if (pending) return res.status(409).json({ error: 'Bạn đã gửi lời mời rồi.' });
+  const reverse = db.requests.find(r => r.from === to && r.to === me && r.status === 'pending');
+  if (reverse) {
+    reverse.status = 'accepted';
+    db.friendships.push({ a: me, b: to, createdAt: Date.now() });
+  } else {
+    db.requests.push({ id: crypto.randomUUID(), from: me, to, status: 'pending', createdAt: Date.now() });
+  }
+  writeSocial(db);
+  res.json({ ok: true, message: reverse ? 'Hai bạn đã kết bạn!' : 'Đã gửi lời mời kết bạn.' });
+});
+app.post('/api/friends/respond', auth, (req, res) => {
+  const db = readSocial();
+  const r = db.requests.find(x => x.id === req.body.requestId && x.to === req.user.username && x.status === 'pending');
+  if (!r) return res.status(404).json({ error: 'Không tìm thấy lời mời.' });
+  if (req.body.accept) {
+    r.status = 'accepted';
+    if (!areFriends(db, r.from, r.to)) db.friendships.push({ a: r.from, b: r.to, createdAt: Date.now() });
+  } else r.status = 'rejected';
+  writeSocial(db); res.json({ ok: true });
+});
+app.get('/api/messages/:username', auth, (req, res) => {
+  const other = String(req.params.username || '');
+  const db = readSocial();
+  if (!areFriends(db, req.user.username, other)) return res.status(403).json({ error: 'Chỉ bạn bè mới có thể nhắn tin.' });
+  const messages = db.messages.filter(m => (m.from === req.user.username && m.to === other) || (m.from === other && m.to === req.user.username)).slice(-200);
+  res.json({ messages: messages.map(m => ({ id:m.id, from:m.from, to:m.to, text:m.text, attachment:m.attachment || null, createdAt:m.createdAt })) });
+});
+const SAFE_FILES = {
+  png:{mime:'image/png', image:true}, jpg:{mime:'image/jpeg',image:true}, jpeg:{mime:'image/jpeg',image:true},
+  gif:{mime:'image/gif',image:true}, webp:{mime:'image/webp',image:true}, bmp:{mime:'image/bmp',image:true}, avif:{mime:'image/avif',image:true}, tif:{mime:'image/tiff'}, tiff:{mime:'image/tiff'}, heic:{mime:'image/heic'}, heif:{mime:'image/heif'}, ico:{mime:'image/x-icon'}, svg:{mime:'image/svg+xml'},
+  pdf:{mime:'application/pdf'}, txt:{mime:'text/plain'}, csv:{mime:'text/csv'},
+  doc:{mime:'application/msword'}, docx:{mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}, docm:{mime:'application/vnd.ms-word.document.macroEnabled.12'}, dot:{mime:'application/msword'}, dotx:{mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.template'},
+  ppt:{mime:'application/vnd.ms-powerpoint'}, pptx:{mime:'application/vnd.openxmlformats-officedocument.presentationml.presentation'}, pptm:{mime:'application/vnd.ms-powerpoint.presentation.macroEnabled.12'}, pps:{mime:'application/vnd.ms-powerpoint'}, ppsx:{mime:'application/vnd.openxmlformats-officedocument.presentationml.slideshow'},
+  xls:{mime:'application/vnd.ms-excel'}, xlsx:{mime:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}, xlsm:{mime:'application/vnd.ms-excel.sheet.macroEnabled.12'}, xlsb:{mime:'application/vnd.ms-excel.sheet.binary.macroEnabled.12'}, xltx:{mime:'application/vnd.openxmlformats-officedocument.spreadsheetml.template'},
+  odt:{mime:'application/vnd.oasis.opendocument.text'}, ods:{mime:'application/vnd.oasis.opendocument.spreadsheet'},
+  odp:{mime:'application/vnd.oasis.opendocument.presentation'}, rtf:{mime:'application/rtf'}
+};
+app.post('/api/messages/:username', auth, (req, res) => {
+  const other = String(req.params.username || ''), me = req.user.username;
+  const db = readSocial();
+  if (!areFriends(db, me, other)) return res.status(403).json({ error: 'Chỉ bạn bè mới có thể nhắn tin.' });
+  const text = String(req.body.text || '').trim().slice(0, 5000);
+  let attachment = null;
+  if (req.body.file) {
+    const f = req.body.file;
+    const name = path.basename(String(f.name || 'tep-tin')).slice(0, 180);
+    const ext = path.extname(name).slice(1).toLowerCase();
+    const rule = SAFE_FILES[ext];
+    if (!rule) return res.status(415).json({ error: 'Loại tệp chưa được hỗ trợ. Hãy gửi ảnh, PDF hoặc tài liệu văn phòng phổ biến.' });
+    const match = String(f.data || '').match(/^data:([^;,]+);base64,([A-Za-z0-9+/=\r\n]+)$/);
+    if (!match) return res.status(400).json({ error: 'Dữ liệu tệp không hợp lệ.' });
+    const buffer = Buffer.from(match[2], 'base64');
+    if (!buffer.length || buffer.length > 8 * 1024 * 1024) return res.status(413).json({ error: 'Mỗi tệp tối đa 8 MB.' });
+    const suppliedMime = String(f.mime || match[1]).toLowerCase();
+    if (rule.mime !== suppliedMime && suppliedMime !== 'application/octet-stream' && !(ext === 'jpg' && suppliedMime === 'image/jpeg') && !(ext === 'txt' && suppliedMime === 'text/plain')) {
+      return res.status(415).json({ error: 'Định dạng tệp không khớp với phần mở rộng.' });
+    }
+    const id = crypto.randomUUID();
+    fs.writeFileSync(path.join(UPLOAD_DIR, id + '.' + ext), buffer, { flag: 'wx' });
+    attachment = { id, name, size: buffer.length, mime: rule.mime, ext, image: !!rule.image };
+  }
+  if (!text && !attachment) return res.status(400).json({ error: 'Nhập tin nhắn hoặc chọn tệp.' });
+  const message = { id: crypto.randomUUID(), from: me, to: other, text, attachment, createdAt: Date.now() };
+  db.messages.push(message);
+  if (db.messages.length > 10000) db.messages = db.messages.slice(-10000);
+  writeSocial(db);
+  res.json({ ok: true, message: { id:message.id, from:me, to:other, text, attachment, createdAt:message.createdAt } });
+});
+app.get('/api/files/:id', auth, (req, res) => {
+  const db = readSocial(), id = String(req.params.id || '');
+  const m = db.messages.find(x => x.attachment && x.attachment.id === id && (x.from === req.user.username || x.to === req.user.username));
+  if (!m) return res.status(404).json({ error: 'Không tìm thấy tệp hoặc bạn không có quyền xem.' });
+  const f = m.attachment, filePath = path.join(UPLOAD_DIR, f.id + '.' + f.ext);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Tệp không còn trên máy chủ.' });
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Type', f.mime);
+  const inline = !!f.image;
+  res.setHeader('Content-Disposition', `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(f.name)}`);
+  res.sendFile(filePath);
 });
 
 /* ---------- Gemini ---------- */
