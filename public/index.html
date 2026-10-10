@@ -95,6 +95,119 @@ input,select,textarea{background:#fff;color:#1e293b;border:1px solid #dce2f0;bor
 @media(max-width:760px){.media-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.media-action{padding:10px;gap:8px}.media-action .media-icon{width:38px;height:38px;flex-basis:38px}.media-action strong{font-size:12px}.media-action small{font-size:10px}.builder-grid #choiceFields{grid-template-columns:1fr}.builder-grid input,.builder-grid select,.builder-grid textarea{width:100%;min-width:0}.media-status{align-items:flex-start}}
 @media(max-width:360px){.media-actions{grid-template-columns:1fr}.media-action{padding:10px 12px}}
 
+/* ===== SỬA GIAO DIỆN: tương thích điện thoại + PC (chỉ CSS) ===== */
+html{-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+img,video,canvas,svg{max-width:100%}
+/* Nút xám/đỏ không bị JS tô màu chủ đạo đè lên */
+.btn.gray{background:#f1f3fa!important;color:#46516c!important}
+.btn.red{background:linear-gradient(135deg,#ef4444,#dc2626)!important;color:#fff!important}
+.btn,.tab{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+/* Header: tiêu đề + tài khoản + tab, không chồng chéo */
+header{align-items:center}
+header h1{order:0}
+.tab{order:1;flex:0 0 auto;line-height:1.3}
+#me{order:2;margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;min-width:0}
+#me small{font-weight:500;color:#8a94a9}
+#me .btn{padding:6px 12px!important;white-space:nowrap}
+/* Phòng học */
+#lobby{display:grid;grid-template-columns:minmax(150px,200px) auto minmax(130px,170px) auto;gap:10px;align-items:center;justify-content:start}
+#lobby input{width:100%!important;min-width:0}
+#lobby .btn{white-space:nowrap}
+#ctrl .btn{white-space:nowrap}
+#hint{line-height:1.6}
+#grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+/* Khung chat AI */
+#aiMain{height:calc(100vh - 150px);min-height:420px;max-height:900px}
+.chat{height:100%}
+.bar .btn{flex:0 0 auto;padding:10px 12px}
+.m{overflow-wrap:anywhere;word-break:break-word}
+.m img{max-width:min(200px,100%)}
+.m table{display:block;max-width:100%;overflow-x:auto}
+.m pre{max-width:100%;overflow-x:auto}
+/* Hộp thoại AI nổi */
+#bubble{right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom))}
+#pop{right:max(18px,env(safe-area-inset-right));bottom:calc(max(18px,env(safe-area-inset-bottom)) + 70px);height:min(540px,calc(100dvh - 120px))}
+/* Kho đề */
+#bank .row>select{flex:1 1 180px;min-width:0}
+#genBox .row input{flex:1 1 140px;min-width:0;width:auto!important}
+#genBox .row #gCount{flex:0 0 80px}
+details summary{padding:4px 0}
+.q{overflow-wrap:anywhere}
+.opt{overflow-wrap:anywhere}
+/* Cài đặt */
+.settings-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.setting input,.setting select{width:100%}
+.setting input[type=color]{padding:3px;height:42px}
+/* Đăng nhập */
+.auth-overlay{overflow:auto;padding:16px}
+.auth-card{width:min(400px,100%);margin:auto}
+.auth-fields input{font-size:16px}
+/* Chống iOS/Android tự zoom khi chạm ô nhập */
+@media(max-width:900px){input,select,textarea{font-size:16px}}
+
+/* Máy tính bảng / điện thoại ngang */
+@media(max-width:900px){
+  #lobby{grid-template-columns:1fr 1fr}
+  #lobby .btn{width:100%}
+  .social-chat{height:auto;min-height:0}
+  .social-messages{height:60dvh;flex:none}
+}
+
+/* Điện thoại */
+@media(max-width:700px){
+  header{display:flex;flex-wrap:wrap;padding:10px 12px;gap:8px}
+  header h1{flex:1 1 100%;width:100%;font-size:19px;margin:0}
+  #me{order:0;flex:1 1 100%;width:100%!important;margin-left:0!important;justify-content:flex-start;font-size:14px}
+  #me small{display:inline}
+  .tab{flex:1 1 calc(50% - 8px);min-width:0;padding:10px 8px;font-size:13px;text-align:center;white-space:normal;background:#f3f4fb}
+  .tab.on{background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  .tab:last-of-type{flex-basis:100%}
+  .tab:hover{transform:none}
+  main{margin:12px auto;padding:0 10px 90px}
+  .card{padding:14px;border-radius:18px}
+  #lobby,#ctrl{padding:12px}
+  #lobby{grid-template-columns:1fr}
+  #lobby input,#lobby .btn{width:100%;min-height:46px}
+  #ctrl{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  #ctrl[style*="none"]{display:none!important}
+  #roomTag{grid-column:1/-1;text-align:center}
+  #ctrl .btn{min-width:0;width:100%;padding:10px 6px;font-size:13px}
+  #ctrl #leave{grid-column:1/-1}
+  #grid{grid-template-columns:1fr 1fr;gap:8px}
+  .tile{border-radius:12px}
+  #aiMain{height:calc(100dvh - 230px);min-height:380px;border-radius:16px}
+  .msgs{padding:10px 8px}
+  .bar textarea{min-height:44px;height:44px}
+  .m{max-width:94%;font-size:14.5px}
+  .bar{padding:8px;gap:5px}
+  #bubble{width:54px;height:54px;font-size:24px;bottom:14px;right:14px}
+  #pop{left:10px;right:10px;width:auto;bottom:80px;height:calc(100dvh - 110px);max-height:620px}
+  .row{gap:8px}
+  #bank .row>select,#bank .row>.btn{flex:1 1 100%}
+  #genBox .row input{flex:1 1 100%!important}
+  #genBox .row #gCount{flex:1 1 100%!important}
+  #genBox .row .btn{width:100%}
+  .builder-grid .btn{width:100%}
+  .setting{padding:12px}
+  .settings-grid{gap:10px}
+  .theme-preview{height:64px}
+  #saveSettings,#resetSettings{flex:1 1 100%}
+  .social-side{padding:14px}
+  .social-chat-head{flex-wrap:wrap}
+  .social-compose .row .btn{flex:1 1 auto}
+  .social-compose .row #socialFileName{flex:1 1 100%;order:3}
+  .auth-card{padding:22px!important}
+  #camModal div{width:calc(100vw - 24px)}
+}
+@media(max-width:380px){
+  .tab{flex-basis:100%}
+  #grid{grid-template-columns:1fr}
+  #ctrl{grid-template-columns:1fr}
+}
+/* Màn hình rất rộng */
+@media(min-width:1500px){main{max-width:1440px}}
+
 </style>
 </head>
 <body>
