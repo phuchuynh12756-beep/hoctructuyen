@@ -78,6 +78,23 @@ input,select,textarea{background:#fff;color:#1e293b;border:1px solid #dce2f0;bor
 @media(max-width:700px){header{padding:10px;gap:6px}header h1{font-size:18px;margin:0 0 3px}header h1:before{height:20px;margin-right:7px}.tab{font-size:12px;padding:9px 7px;border-radius:9px}main{margin:12px auto;padding:0 9px 30px}.card{border-radius:16px;padding:13px}.builder-grid{grid-template-columns:1fr}.social-layout{gap:12px}.social-chat{height:72dvh;min-height:480px;border-radius:16px}.social-chat-head{padding:12px}.social-messages{padding:12px 10px;gap:10px}.social-bubble{max-width:90%;padding:10px 12px;font-size:14px}.social-compose{padding:10px}.social-person{padding:9px}.my-id strong{font-size:16px}.social-side h2{font-size:20px}.btn{padding:10px 12px}.social-compose .row>*{flex:1}.social-compose input[type=file]{width:100%}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
+
+/* Bộ chọn nội dung đề: icon SVG, thẻ thao tác rõ ràng và không tràn trên điện thoại */
+.media-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.media-action{display:flex;align-items:center;gap:10px;min-width:0;padding:12px;border:1px solid #e4e7f5;border-radius:15px;background:linear-gradient(145deg,#fff,#f8f8ff);color:#31365a;text-align:left;box-shadow:0 4px 12px #3331;cursor:pointer}
+.media-action:hover{border-color:#a5a0ff;transform:translateY(-1px);box-shadow:0 8px 18px #6257e81c}
+.media-action .media-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:#eeedff;color:#6257e8}
+.media-action:nth-child(2) .media-icon{background:#e4f8ef;color:#14845d}.media-action:nth-child(3) .media-icon{background:#fff0e5;color:#c56521}.media-action:nth-child(4) .media-icon{background:#e7f4ff;color:#2373bd}
+.media-action svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.media-action strong{display:block;font-size:13px;line-height:1.25}.media-action small{display:block;margin-top:3px;color:#7b8198;font-size:11px;font-weight:500;line-height:1.3}
+.media-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px dashed #d7dcef;border-radius:12px;background:#fafaff;color:#68708a;font-size:13px;overflow-wrap:anywhere}
+.media-status img,.media-status video{display:block;max-width:min(100%,280px);max-height:180px;border-radius:10px;object-fit:contain;background:#111}
+.media-status .clear-media{margin-left:auto;border:0;border-radius:9px;padding:7px 10px;background:#fff0f0;color:#b42332;font-weight:700}
+.question-media{display:block;max-width:100%;max-height:340px;margin:10px 0;border-radius:14px;object-fit:contain;background:#101323}
+.builder-grid{min-width:0}.builder-grid>*{min-width:0;max-width:100%}.builder-grid textarea{width:100%;resize:vertical}.builder-grid #choiceFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.builder-grid #choiceFields>*{width:100%;min-width:0}
+@media(max-width:760px){.media-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.media-action{padding:10px;gap:8px}.media-action .media-icon{width:38px;height:38px;flex-basis:38px}.media-action strong{font-size:12px}.media-action small{font-size:10px}.builder-grid #choiceFields{grid-template-columns:1fr}.builder-grid input,.builder-grid select,.builder-grid textarea{width:100%;min-width:0}.media-status{align-items:flex-start}}
+@media(max-width:360px){.media-actions{grid-template-columns:1fr}.media-action{padding:10px 12px}}
+
 </style>
 </head>
 <body>
@@ -142,8 +159,20 @@ input,select,textarea{background:#fff;color:#1e293b;border:1px solid #dce2f0;bor
         </div>
         <hr style="border:0;border-top:1px solid #e5e7eb;margin:14px 0">
         <div class="builder-grid">
-          <select id="qType"><option value="choice">Trắc nghiệm</option><option value="truefalse">Đúng / Sai</option><option value="short">Trả lời ngắn</option><option value="essay">Tự luận</option></select>
-          <textarea id="qText" rows="2" placeholder="Nội dung câu hỏi"></textarea>
+          <select id="qType"><option value="choice">Trắc nghiệm</option><option value="truefalse">Đúng / Sai</option><option value="short">Trả lời ngắn</option><option value="essay">Tự luận</option><option value="media">Chỉ gửi ảnh/video (không cần đáp án)</option></select>
+          <label for="qText" style="font-weight:700;font-size:13px">Nội dung câu hỏi (có thể để trống nếu dùng ảnh/video)</label>
+          <textarea id="qText" rows="2" placeholder="Nhập câu hỏi tại đây… hoặc đính kèm ảnh/video bên dưới"></textarea>
+          <div class="media-actions" aria-label="Thêm nội dung đa phương tiện">
+            <button class="media-action" type="button" id="pickQuestionImage"><span class="media-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span><span><strong>Thêm ảnh</strong><small>Chọn ảnh có sẵn</small></span></button>
+            <button class="media-action" type="button" id="captureQuestionImage"><span class="media-icon"><svg viewBox="0 0 24 24"><path d="M14 4h-4L8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span><strong>Chụp ảnh</strong><small>Mở camera điện thoại</small></span></button>
+            <button class="media-action" type="button" id="pickQuestionVideo"><span class="media-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3z"/></svg></span><span><strong>Thêm video</strong><small>Chọn video có sẵn</small></span></button>
+            <button class="media-action" type="button" id="captureQuestionVideo"><span class="media-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v2M21 12h-2"/></svg></span><span><strong>Quay video</strong><small>Mở camera quay</small></span></button>
+          </div>
+          <input id="questionImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+          <input id="questionCaptureImageFile" type="file" accept="image/*" capture="environment" hidden>
+          <input id="questionVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/*" hidden>
+          <input id="questionCaptureVideoFile" type="file" accept="video/*" capture="environment" hidden>
+          <div id="questionMediaStatus" class="media-status"><span>✨ Chưa có ảnh/video đính kèm. Bạn vẫn có thể chỉ nhập văn bản.</span></div>
           <div id="choiceFields"><input id="optA" placeholder="Đáp án A"><input id="optB" placeholder="Đáp án B"><input id="optC" placeholder="Đáp án C (không bắt buộc)"><input id="optD" placeholder="Đáp án D (không bắt buộc)"><select id="qAnswer"><option value="0">Đáp án đúng: A</option><option value="1">Đáp án đúng: B</option><option value="2">Đáp án đúng: C</option><option value="3">Đáp án đúng: D</option></select></div>
           <input id="answerText" placeholder="Đáp án tham khảo (không bắt buộc)" hidden>
           <textarea id="qExplain" rows="2" placeholder="Giải thích (không bắt buộc)"></textarea>
@@ -384,9 +413,11 @@ function showExam() {
   const box = $('#quiz'); box.innerHTML = '<h3>' + e.title + '</h3><div id="score"></div>';
   e.questions.forEach((q, qi) => {
     const d = document.createElement('div'); d.className = 'q';
-    d.innerHTML = `<b>Câu ${qi + 1}.</b> ${renderMd(q.q)}`;
+    d.innerHTML = `<b>Câu ${qi + 1}.</b> ${renderMd(q.q || '')}`;
+    if (q.mediaUrl) { const media = document.createElement(q.mediaType === 'video' ? 'video' : 'img'); media.className = 'question-media'; media.src = q.mediaUrl; if (q.mediaType === 'video') { media.controls = true; media.playsInline = true; } else { media.alt = `Ảnh minh họa câu ${qi + 1}`; media.loading = 'lazy'; } d.appendChild(media); }
     const type = q.type || (q.options?.length ? 'choice' : 'essay');
-    if (type === 'choice' || type === 'truefalse' || q.options?.length) {
+    if (type === 'media') { /* Chỉ hiển thị ảnh/video, không yêu cầu trả lời hay đáp án. */ }
+    else if (type === 'choice' || type === 'truefalse' || q.options?.length) {
       (q.options || ['Đúng','Sai']).forEach((o, oi) => {
         const l=document.createElement('label'); l.className='opt';
         const letter=document.createElement('strong'); letter.textContent=String.fromCharCode(65+oi)+'. '; l.appendChild(letter);
@@ -493,9 +524,16 @@ $('#share').onclick = async e => {
 
 /* ---------- Thêm đề thủ công ---------- */
 let draftQuestions=[];
-function updateDraft(){ $('#draftList').innerHTML=draftQuestions.map((q,i)=>`<div class="q"><b>Câu ${i+1} (${q.type})</b><p>${esc(q.q)}</p><button class="btn red" data-rm="${i}">Xóa câu</button></div>`).join('');$('#draftList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{draftQuestions.splice(+b.dataset.rm,1);updateDraft();}); }
-$('#qType').onchange=()=>{const t=$('#qType').value;$('#choiceFields').hidden=!(t==='choice'||t==='truefalse');$('#answerText').hidden=(t==='choice'||t==='truefalse');};
-$('#addQuestion').onclick=()=>{const type=$('#qType').value,q={type,q:$('#qText').value.trim(),explain:$('#qExplain').value.trim()};if(!q.q)return alert('Nhập nội dung câu hỏi.');if(type==='choice'){q.options=[$('#optA').value,$('#optB').value,$('#optC').value,$('#optD').value].filter(x=>x.trim());if(q.options.length<2)return alert('Trắc nghiệm cần ít nhất 2 đáp án.');q.answer=+$('#qAnswer').value;if(q.answer>=q.options.length)return alert('Chọn đáp án đúng đang có trong danh sách.');}else if(type==='truefalse'){q.options=['Đúng','Sai'];q.answer=+$('#qAnswer').value;}else q.answerText=$('#answerText').value.trim();draftQuestions.push(q);$('#qText').value='';$('#qExplain').value='';['optA','optB','optC','optD','answerText'].forEach(id=>$('#'+id).value='');updateDraft();};
+let questionMedia=null;
+function showQuestionMedia(){const box=$('#questionMediaStatus');if(!questionMedia){box.innerHTML='<span>✨ Chưa có ảnh/video đính kèm. Bạn vẫn có thể chỉ nhập văn bản.</span>';return;}box.innerHTML='';const preview=document.createElement(questionMedia.mediaType==='video'?'video':'img');preview.src=questionMedia.localUrl||questionMedia.mediaUrl; if(questionMedia.mediaType==='video'){preview.controls=true;preview.playsInline=true;}else preview.alt='Xem trước ảnh câu hỏi';box.appendChild(preview);const label=document.createElement('span');label.textContent=questionMedia.fileName||'Đã chọn tệp';box.appendChild(label);const clear=document.createElement('button');clear.type='button';clear.className='clear-media';clear.textContent='✕ Bỏ tệp';clear.onclick=()=>{if(questionMedia.localUrl)URL.revokeObjectURL(questionMedia.localUrl);questionMedia=null;showQuestionMedia();};box.appendChild(clear);}
+function updateDraft(){ $('#draftList').innerHTML=draftQuestions.map((q,i)=>`<div class="q"><b>Câu ${i+1} (${q.type})</b><p>${esc(q.q||'(Câu hỏi bằng ảnh/video)')}</p>${q.mediaUrl?`<small>📎 Có ${q.mediaType==='video'?'video':'ảnh'} đính kèm</small>`:''}<button class="btn red" data-rm="${i}">✕ Xóa câu</button></div>`).join('');$('#draftList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{draftQuestions.splice(+b.dataset.rm,1);updateDraft();}); }
+function chooseQuestionMedia(input){input.click();}
+async function loadQuestionMedia(file, mediaType){if(!file)return;const isVideo=mediaType==='video';const max=isVideo?8*1024*1024:5*1024*1024;if(file.size>max){alert(isVideo?'Video tối đa 8 MB.':'Ảnh tối đa 5 MB.');return;}if(!file.type.startsWith(isVideo?'video/':'image/')){alert('Tệp không đúng định dạng.');return;}if(questionMedia?.localUrl)URL.revokeObjectURL(questionMedia.localUrl);questionMedia={file,mediaType,fileName:file.name,localUrl:URL.createObjectURL(file),mediaUrl:null};showQuestionMedia();}
+$('#pickQuestionImage').onclick=()=>chooseQuestionMedia($('#questionImageFile'));$('#captureQuestionImage').onclick=()=>chooseQuestionMedia($('#questionCaptureImageFile'));$('#pickQuestionVideo').onclick=()=>chooseQuestionMedia($('#questionVideoFile'));$('#captureQuestionVideo').onclick=()=>chooseQuestionMedia($('#questionCaptureVideoFile'));
+$('#questionImageFile').onchange=e=>loadQuestionMedia(e.target.files[0],'image');$('#questionCaptureImageFile').onchange=e=>loadQuestionMedia(e.target.files[0],'image');$('#questionVideoFile').onchange=e=>loadQuestionMedia(e.target.files[0],'video');$('#questionCaptureVideoFile').onchange=e=>loadQuestionMedia(e.target.files[0],'video');
+async function uploadQuestionMedia(){if(!questionMedia)return null;if(questionMedia.mediaUrl)return {mediaUrl:questionMedia.mediaUrl,mediaType:questionMedia.mediaType};const dataUrl=await fileToDataURL(questionMedia.file);const r=await api('/api/exam-media',{dataUrl,mediaType:questionMedia.mediaType});const d=await r.json();if(!r.ok)throw new Error(d.error||'Không tải được ảnh/video');questionMedia.mediaUrl=d.url;return {mediaUrl:d.url,mediaType:d.mediaType};}
+$('#qType').onchange=()=>{const t=$('#qType').value;$('#choiceFields').hidden=!(t==='choice'||t==='truefalse');$('#answerText').hidden=(t==='choice'||t==='truefalse'||t==='media');$('#qExplain').hidden=(t==='media');};
+$('#addQuestion').onclick=async()=>{const type=$('#qType').value,q={type,q:$('#qText').value.trim(),explain:type==='media'?'':$('#qExplain').value.trim()};if(!q.q&&!questionMedia)return alert('Nhập nội dung hoặc đính kèm ảnh/video cho câu hỏi.');if(type==='media'&&!questionMedia)return alert('Chế độ chỉ gửi ảnh/video cần đính kèm ít nhất một tệp.');if(type==='choice'){q.options=[$('#optA').value,$('#optB').value,$('#optC').value,$('#optD').value].filter(x=>x.trim());if(q.options.length<2)return alert('Trắc nghiệm cần ít nhất 2 đáp án.');q.answer=+$('#qAnswer').value;if(q.answer>=q.options.length)return alert('Chọn đáp án đúng đang có trong danh sách.');}else if(type==='truefalse'){q.options=['Đúng','Sai'];q.answer=+$('#qAnswer').value;}else if(type!=='media')q.answerText=$('#answerText').value.trim();try{const media=await uploadQuestionMedia();if(media)Object.assign(q,media);}catch(err){alert(err.message);return;}draftQuestions.push(q);$('#qText').value='';$('#qExplain').value='';['optA','optB','optC','optD','answerText'].forEach(id=>$('#'+id).value='');if(questionMedia?.localUrl)URL.revokeObjectURL(questionMedia.localUrl);questionMedia=null;showQuestionMedia();['questionImageFile','questionCaptureImageFile','questionVideoFile','questionCaptureVideoFile'].forEach(id=>$('#'+id).value='');updateDraft();};
 $('#addExam').onclick=async()=>{const msg=$('#mMsg');msg.textContent='⏳ Đang lưu...';try{const subject=$('#mSubj').value.trim(),title=$('#mTitle').value.trim();if(!subject||!title)throw new Error('Nhập môn học và tên đề');if(!draftQuestions.length)throw new Error('Hãy thêm ít nhất một câu vào bản nháp');const r=await api('/api/exams',{subject,exam:{title,questions:draftQuestions}});const d=await r.json();if(!r.ok)throw new Error(d.error);msg.textContent=`✅ Đã thêm “${d.title}” (${d.count} câu)`;draftQuestions=[];updateDraft();await loadBank();}catch(e){msg.textContent='⚠️ '+e.message;}};
 $('#parseImage').onclick=async()=>{const file=$('#examImage').files[0],subject=$('#mSubj').value.trim(),title=$('#mTitle').value.trim();if(!file)return alert('Chọn hoặc chụp ảnh đề trước.');if(!subject)return alert('Nhập môn học trước.');if(file.size>7*1024*1024)return alert('Ảnh quá lớn, hãy chọn ảnh dưới 7 MB.');const msg=$('#mMsg');msg.textContent='⏳ AI đang đọc ảnh và thêm đề...';try{const image=await fileToDataURL(file);const r=await api('/api/exams/from-image',{subject,title,image});const d=await r.json();if(!r.ok)throw new Error(d.error);msg.textContent=`✅ Đã nhận dạng và thêm “${d.title}” (${d.count} câu). Hãy kiểm tra nội dung.`;await loadBank();$('#examImage').value='';}catch(e){msg.textContent='⚠️ '+e.message;}};
 

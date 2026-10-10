@@ -358,22 +358,44 @@ function normalizeExam(exam, user) {
   if (!exam || !String(exam.title || '').trim() || !Array.isArray(exam.questions) || !exam.questions.length) throw new Error('Đề cần có tiêu đề và ít nhất một câu hỏi');
   if (exam.questions.length > 50) throw new Error('Tối đa 50 câu mỗi đề');
   const questions = exam.questions.map((q, i) => {
-    const type = ['choice','truefalse','short','essay'].includes(q.type) ? q.type : (Array.isArray(q.options) && q.options.length ? 'choice' : 'essay');
+    const type = ['choice','truefalse','short','essay','media'].includes(q.type) ? q.type : (Array.isArray(q.options) && q.options.length ? 'choice' : 'essay');
     const item = { type, q: String(q.q || '').trim().slice(0, 8000), explain: String(q.explain || '').slice(0, 4000) };
-    if (!item.q) throw new Error(`Câu ${i+1} chưa có nội dung`);
+    if (typeof q.mediaUrl === 'string' && /^\/data\/exam-media\/[a-f0-9-]+\.(?:jpg|png|webp|gif|mp4|webm|mov)$/i.test(q.mediaUrl)) { item.mediaUrl = q.mediaUrl; item.mediaType = q.mediaType === 'video' ? 'video' : 'image'; }
+    if (!item.q && !item.mediaUrl) throw new Error(`Câu ${i+1} chưa có nội dung hoặc ảnh/video`);
     if (type === 'choice') {
       if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 8) throw new Error(`Câu ${i+1}: trắc nghiệm cần 2–8 đáp án`);
       item.options = q.options.map(x => String(x).slice(0, 2000));
       item.answer = Number.isInteger(+q.answer) && +q.answer >= 0 && +q.answer < item.options.length ? +q.answer : null;
     } else if (type === 'truefalse') {
       item.options = ['Đúng','Sai']; item.answer = q.answer === 0 || q.answer === '0' || q.answer === true ? 0 : (q.answer === 1 || q.answer === '1' || q.answer === false ? 1 : null);
-    } else {
+    } else if (type !== 'media') {
       item.answerText = String(q.answerText || '');
     }
     return item;
   });
   return { id: crypto.randomUUID(), title: String(exam.title).trim().slice(0, 160), questions, createdBy: user.name, createdByUsername: user.username, createdAt: Date.now() };
 }
+// Tải ảnh/video minh họa câu hỏi; chỉ người đã đăng nhập mới được tải lên.
+const EXAM_MEDIA_DIR = path.join(__dirname, 'public', 'data', 'exam-media');
+fs.mkdirSync(EXAM_MEDIA_DIR, { recursive: true });
+app.post('/api/exam-media', auth, (req, res) => {
+  try {
+    const { dataUrl, mediaType } = req.body || {};
+    const m = String(dataUrl || '').match(/^data:(image\/(?:jpeg|png|webp|gif)|video\/(?:mp4|webm|quicktime));base64,([\s\S]+)$/);
+    if (!m) return res.status(400).json({ error: 'Chỉ hỗ trợ ảnh JPG/PNG/WEBP/GIF hoặc video MP4/WEBM/MOV.' });
+    const isVideo = m[1].startsWith('video/');
+    if (mediaType && mediaType !== (isVideo ? 'video' : 'image')) return res.status(400).json({ error: 'Loại tệp không khớp.' });
+    const maxBytes = isVideo ? 8 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (m[2].length > Math.ceil(maxBytes * 4 / 3) + 16) return res.status(413).json({ error: isVideo ? 'Video tối đa 8 MB.' : 'Ảnh tối đa 5 MB.' });
+    const bytes = Buffer.from(m[2], 'base64');
+    if (!bytes.length || bytes.length > maxBytes) return res.status(413).json({ error: isVideo ? 'Video tối đa 8 MB.' : 'Ảnh tối đa 5 MB.' });
+    const ext = ({ 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif', 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' })[m[1]];
+    const name = `${crypto.randomUUID()}.${ext}`;
+    fs.writeFileSync(path.join(EXAM_MEDIA_DIR, name), bytes, { flag: 'wx' });
+    res.json({ ok: true, url: `/data/exam-media/${name}`, mediaType: isVideo ? 'video' : 'image' });
+  } catch (e) { res.status(400).json({ error: 'Không tải được tệp: ' + e.message }); }
+});
+
 app.post('/api/exams', auth, (req, res) => {
   try {
     const { subject, exam } = req.body || {};
