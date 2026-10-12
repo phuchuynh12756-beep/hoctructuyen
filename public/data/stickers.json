@@ -1,0 +1,13 @@
+{"packs":[
+{"id":"feel","icon":"😀","name":"Cảm xúc","stickers":[
+{"id":"haha","e":"😂","t":"Haha","c":"#ffe27a"},{"id":"love","e":"🥰","t":"Thương quá","c":"#ffb3c7"},{"id":"cry","e":"😭","t":"Hu hu","c":"#a8d8ff"},{"id":"angry","e":"😡","t":"Giận rồi!","c":"#ff9a8b"},
+{"id":"shy","e":"😳","t":"Ngại quá","c":"#ffc6a8"},{"id":"cool","e":"😎","t":"Chất lắm","c":"#b5e48c"},{"id":"wow","e":"🤩","t":"Wow!","c":"#d4b8ff"},{"id":"sleepy","e":"😴","t":"Buồn ngủ","c":"#bfd1ff"}]},
+{"id":"study","icon":"📚","name":"Học tập","stickers":[
+{"id":"study","e":"📚","t":"Học bài thôi","c":"#ffd89b"},{"id":"idea","e":"💡","t":"Có ý tưởng!","c":"#fff09a"},{"id":"tired","e":"🥱","t":"Mệt quá","c":"#cfd8e6"},{"id":"exam","e":"📝","t":"Thi rồi…","c":"#ffc9c9"},
+{"id":"ten","e":"💯","t":"Điểm 10!","c":"#b8f2c8"},{"id":"fight","e":"💪","t":"Cố lên!","c":"#ffcf9e"},{"id":"thanks","e":"🙏","t":"Cảm ơn nha","c":"#c9f0ff"},{"id":"sorry","e":"🙇","t":"Xin lỗi nha","c":"#e2d4ff"},
+{"id":"help","e":"🆘","t":"Cứu mình!","c":"#ffb4b4"},{"id":"ok","e":"👌","t":"Ok luôn","c":"#c8f5a8"}]},
+{"id":"life","icon":"🍜","name":"Đời sống","stickers":[
+{"id":"hungry","e":"🍜","t":"Đói quá","c":"#ffd0a0"},{"id":"coffee","e":"☕","t":"Cà phê nhé","c":"#e8cfb0"},{"id":"night","e":"🌙","t":"Ngủ ngon","c":"#b9c0ff"},{"id":"morning","e":"☀️","t":"Chào buổi sáng","c":"#ffe9a0"},
+{"id":"party","e":"🎉","t":"Ăn mừng!","c":"#ffb8e0"},{"id":"hi","e":"👋","t":"Xin chào","c":"#b8e8ff"},{"id":"hug","e":"🤗","t":"Ôm cái nè","c":"#ffd6e0"},{"id":"heart","e":"❤️","t":"Yêu nhiều","c":"#ffadad"},
+{"id":"cake","e":"🎂","t":"Sinh nhật vui","c":"#ffc8dd"},{"id":"rain","e":"🌧️","t":"Mưa rồi","c":"#b5d3e8"}]}
+]}

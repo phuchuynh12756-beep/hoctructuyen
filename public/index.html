@@ -95,6 +95,8 @@ input,select,textarea{background:#fff;color:#1e293b;border:1px solid #dce2f0;bor
 @media(max-width:760px){.media-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.media-action{padding:10px;gap:8px}.media-action .media-icon{width:38px;height:38px;flex-basis:38px}.media-action strong{font-size:12px}.media-action small{font-size:10px}.builder-grid #choiceFields{grid-template-columns:1fr}.builder-grid input,.builder-grid select,.builder-grid textarea{width:100%;min-width:0}.media-status{align-items:flex-start}}
 @media(max-width:360px){.media-actions{grid-template-columns:1fr}.media-action{padding:10px 12px}}
 
+.media-status .mthumb{position:relative;width:92px;height:92px;flex:none}.media-status .mthumb img,.media-status .mthumb video{width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;border-radius:10px}.media-status .mthumb .clear-media{position:absolute;top:3px;right:3px;margin:0;padding:2px 7px;border-radius:50%;line-height:1.3}
+.sol-box{margin-top:8px}.sol-box .question-media{margin:6px 0}
 /* ===== SỬA GIAO DIỆN: tương thích điện thoại + PC (chỉ CSS) ===== */
 html{-webkit-text-size-adjust:100%}
 body{overflow-x:hidden}
@@ -216,7 +218,7 @@ details summary{padding:4px 0}
   <button class="tab on" data-t="room">Lớp học</button>
   <button class="tab" data-t="teacher">Giáo viên AI</button>
   <button class="tab" data-t="bank">Kho bài tự luyện & đề ôn</button>
-  <button class="tab" data-t="social">💬 Bạn bè & tin nhắn</button>
+  <button class="tab" id="openChat" title="Mở cửa sổ trò chuyện riêng">💬 Trò chuyện ↗</button>
   <button class="tab" data-t="settings">⚙️ Cài đặt</button>
   <span id="me" style="margin-left:auto;font-size:14px"></span>
 </header>
@@ -272,7 +274,7 @@ details summary{padding:4px 0}
         </div>
         <hr style="border:0;border-top:1px solid #e5e7eb;margin:14px 0">
         <div class="builder-grid">
-          <select id="qType"><option value="choice">Trắc nghiệm</option><option value="truefalse">Đúng / Sai</option><option value="short">Trả lời ngắn</option><option value="essay">Tự luận</option><option value="media">Chỉ gửi ảnh/video (không cần đáp án)</option></select>
+          <select id="qType"><option value="media">📷 Câu hỏi bằng ảnh/video (đáp án nằm trong ảnh, không cần A B C D)</option><option value="choice">Trắc nghiệm A B C D</option><option value="truefalse">Đúng / Sai</option><option value="short">Trả lời ngắn</option><option value="essay">Tự luận</option></select>
           <label for="qText" style="font-weight:700;font-size:13px">Nội dung câu hỏi (có thể để trống nếu dùng ảnh/video)</label>
           <textarea id="qText" rows="2" placeholder="Nhập câu hỏi tại đây… hoặc đính kèm ảnh/video bên dưới"></textarea>
           <div class="media-actions" aria-label="Thêm nội dung đa phương tiện">
@@ -281,46 +283,30 @@ details summary{padding:4px 0}
             <button class="media-action" type="button" id="pickQuestionVideo"><span class="media-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3z"/></svg></span><span><strong>Thêm video</strong><small>Chọn video có sẵn</small></span></button>
             <button class="media-action" type="button" id="captureQuestionVideo"><span class="media-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v2M21 12h-2"/></svg></span><span><strong>Quay video</strong><small>Mở camera quay</small></span></button>
           </div>
-          <input id="questionImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+          <input id="questionImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
           <input id="questionCaptureImageFile" type="file" accept="image/*" capture="environment" hidden>
           <input id="questionVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/*" hidden>
           <input id="questionCaptureVideoFile" type="file" accept="video/*" capture="environment" hidden>
-          <div id="questionMediaStatus" class="media-status"><span>✨ Chưa có ảnh/video đính kèm. Bạn vẫn có thể chỉ nhập văn bản.</span></div>
-          <div id="choiceFields"><input id="optA" placeholder="Đáp án A"><input id="optB" placeholder="Đáp án B"><input id="optC" placeholder="Đáp án C (không bắt buộc)"><input id="optD" placeholder="Đáp án D (không bắt buộc)"><select id="qAnswer"><option value="0">Đáp án đúng: A</option><option value="1">Đáp án đúng: B</option><option value="2">Đáp án đúng: C</option><option value="3">Đáp án đúng: D</option></select></div>
+          <div id="questionMediaStatus" class="media-status"><span>✨ Chưa có ảnh/video đính kèm. Có thể thêm nhiều ảnh cho một câu hỏi.</span></div>
+          <div id="choiceFields" hidden><input id="optA" placeholder="Đáp án A"><input id="optB" placeholder="Đáp án B"><input id="optC" placeholder="Đáp án C (không bắt buộc)"><input id="optD" placeholder="Đáp án D (không bắt buộc)"><select id="qAnswer"><option value="0">Đáp án đúng: A</option><option value="1">Đáp án đúng: B</option><option value="2">Đáp án đúng: C</option><option value="3">Đáp án đúng: D</option></select></div>
           <input id="answerText" placeholder="Đáp án tham khảo (không bắt buộc)" hidden>
           <textarea id="qExplain" rows="2" placeholder="Giải thích (không bắt buộc)"></textarea>
+          <div id="solBox">
+            <label style="font-weight:700;font-size:13px">📷 Hình lời giải / đáp án (thêm được nhiều ảnh)</label>
+            <div class="media-actions" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+              <button class="media-action" type="button" id="pickSolImage"><span class="media-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span><span><strong>Thêm ảnh lời giải</strong><small>Chọn nhiều ảnh cùng lúc</small></span></button>
+              <button class="media-action" type="button" id="captureSolImage"><span class="media-icon"><svg viewBox="0 0 24 24"><path d="M14 4h-4L8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span><strong>Chụp ảnh lời giải</strong><small>Chụp xong có thể chụp tiếp</small></span></button>
+            </div>
+            <input id="solImageFile" type="file" accept="image/*" multiple hidden>
+            <input id="solCaptureFile" type="file" accept="image/*" capture="environment" hidden>
+            <div id="solMediaStatus" class="media-status"><span>Chưa có hình lời giải.</span></div>
+          </div>
           <button class="btn gray" id="addQuestion" type="button">＋ Thêm câu vào bản nháp</button>
           <div id="draftList"></div>
           <button class="btn" id="addExam" type="button">📚 Lưu đề vào kho chung</button><span id="mMsg" style="font-size:14px"></span>
         </div>
       </details>
       <div id="quiz"></div>
-    </div>
-  </section>
-  <!-- BẠN BÈ & TIN NHẮN -->
-  <section id="social">
-    <div class="social-layout">
-      <aside class="card social-side">
-        <h2 style="margin-top:0">💬 Bạn bè</h2>
-        <div class="my-id"><small>ID của bạn</small><div class="row"><strong id="mySocialId">Đang tải...</strong><button class="btn gray" id="copyMyId">Sao chép</button></div></div>
-        <p style="font-size:13px;color:#6b7280">Chia sẻ ID để người khác tìm bạn.</p>
-        <div class="row"><input id="friendSearch" placeholder="Tìm theo ID hoặc tên" style="width:100%;flex:1"><button class="btn" id="searchFriend">Tìm</button></div>
-        <div id="friendSearchResults" class="social-list"></div>
-        <h3>📩 Lời mời kết bạn</h3><div id="friendRequests" class="social-list"></div>
-        <h3>👥 Danh sách bạn bè</h3><div id="friendList" class="social-list"></div>
-        <h3>🕘 Trò chuyện gần đây</h3><div id="conversationList" class="social-list"></div>
-      </aside>
-      <div class="card social-chat">
-        <div class="social-chat-head"><div><b id="chatTitle">Chọn một người bạn</b><div id="chatSub" style="font-size:12px;color:#6b7280"></div></div><button class="btn gray" id="refreshSocial">↻ Làm mới</button></div>
-        <div id="socialMessages" class="social-messages"><p style="color:#6b7280;text-align:center">Kết bạn với bạn học để bắt đầu trò chuyện.</p></div>
-        <div class="social-compose">
-          <textarea id="socialText" rows="2" placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)" disabled></textarea>
-          <div class="row"><input id="socialFile" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,.avif,.tif,.tiff,.heic,.heif,.ico,.svg,.pdf,.txt,.csv,.doc,.docx,.docm,.dot,.dotx,.ppt,.pptx,.pptm,.pps,.ppsx,.xls,.xlsx,.xlsm,.xlsb,.xltx,.odt,.ods,.odp,.rtf,image/png,image/jpeg,image/gif,image/webp,image/bmp,application/pdf" hidden>
-            <button class="btn gray" id="attachSocial" disabled>📎 Gửi tệp</button><span id="socialFileName" style="font-size:12px;color:#6b7280;flex:1"></span><button class="btn" id="sendSocial" disabled>Gửi ➤</button>
-          </div>
-          <small style="color:#6b7280">Ảnh và tài liệu văn phòng phổ biến; tối đa 8 MB/tệp.</small>
-        </div>
-      </div>
     </div>
   </section>
   <!-- CÀI ĐẶT -->
@@ -352,6 +338,7 @@ details summary{padding:4px 0}
 
 <button id="bubble" title="Hỏi giáo viên AI">💬</button>
 <div id="pop"></div>
+<div id="imgLb" style="display:none;position:fixed;inset:0;background:#000d;z-index:300;align-items:center;justify-content:center;padding:10px;cursor:zoom-out"><img alt="" style="max-width:100%;max-height:100%;object-fit:contain;touch-action:pinch-zoom"></div>
 <div id="camModal"><div><video id="camv" autoplay playsinline></video><br><br>
   <button class="btn" id="snap">📸 Chụp</button> <button class="btn gray" id="snapX">Huỷ</button></div></div>
 
@@ -379,10 +366,9 @@ async function loadSettings(){ try{const r=await fetch('/api/settings',{headers:
 
 
 /* ---------- Tabs ---------- */
-document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+document.querySelectorAll('.tab[data-t]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab[data-t]').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('section').forEach(x => x.classList.toggle('on', x.id === b.dataset.t));
-  if (b.dataset.t === 'social') setTimeout(() => loadSocial().catch(e => socialNotice(e.message)), 0);
 });
 
 /* ---------- Markdown + KaTeX ---------- */
@@ -520,6 +506,11 @@ function fillExams() {
   $('#exam').innerHTML = s.exams.map((e, i) => `<option value="${i}">${e.title}</option>`).join('');
   showExam();
 }
+function viewImg(u) { const b = document.getElementById('imgLb'); b.querySelector('img').src = u; b.style.display = 'flex'; }
+document.getElementById('imgLb').onclick = () => { document.getElementById('imgLb').style.display = 'none'; };
+addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('imgLb').style.display = 'none'; });
+function mediaNodes(list, alt) { return (list || []).map((m, i) => { if (m.type === 'video') { const v = document.createElement('video'); v.className = 'question-media'; v.src = m.url; v.controls = true; v.playsInline = true; return v; } const im = document.createElement('img'); im.className = 'question-media'; im.src = m.url; im.alt = alt + ' ' + (i + 1); im.loading = 'lazy'; im.style.cursor = 'zoom-in'; im.onclick = () => viewImg(m.url); return im; }); }
+function solBox(q) { const n = mediaNodes(q.explainMedia, 'Lời giải'); if (!n.length) return null; const b = document.createElement('div'); b.className = 'sol-box'; b.innerHTML = '<b>📷 Lời giải bằng hình (chạm vào ảnh để phóng to):</b>'; n.forEach(x => b.appendChild(x)); return b; }
 function showExam() {
   const e = bank.subjects[$('#subj').value]?.exams[$('#exam').value]; if (!e) { $('#quiz').innerHTML = 'Chưa có đề.'; return; }
   let score = 0, done = 0;
@@ -527,9 +518,15 @@ function showExam() {
   e.questions.forEach((q, qi) => {
     const d = document.createElement('div'); d.className = 'q';
     d.innerHTML = `<b>Câu ${qi + 1}.</b> ${renderMd(q.q || '')}`;
-    if (q.mediaUrl) { const media = document.createElement(q.mediaType === 'video' ? 'video' : 'img'); media.className = 'question-media'; media.src = q.mediaUrl; if (q.mediaType === 'video') { media.controls = true; media.playsInline = true; } else { media.alt = `Ảnh minh họa câu ${qi + 1}`; media.loading = 'lazy'; } d.appendChild(media); }
+    mediaNodes(q.media || (q.mediaUrl ? [{ url: q.mediaUrl, type: q.mediaType }] : []), 'Hình câu ' + (qi + 1)).forEach(n => d.appendChild(n));
     const type = q.type || (q.options?.length ? 'choice' : 'essay');
-    if (type === 'media') { /* Chỉ hiển thị ảnh/video, không yêu cầu trả lời hay đáp án. */ }
+    if (type === 'media') {
+      if ((q.explainMedia && q.explainMedia.length) || q.explain) {
+        const btn = document.createElement('button'); btn.className = 'btn gray'; btn.textContent = '👁️ Xem lời giải'; let box = null;
+        btn.onclick = () => { if (box) { box.remove(); box = null; btn.textContent = '👁️ Xem lời giải'; return; } box = document.createElement('div'); box.className = 'ex'; if (q.explain) box.innerHTML = '💡 ' + renderMd(q.explain); const sb = solBox(q); if (sb) box.appendChild(sb); d.appendChild(box); btn.textContent = '🙈 Ẩn lời giải'; };
+        d.appendChild(btn);
+      }
+    }
     else if (type === 'choice' || type === 'truefalse' || q.options?.length) {
       (q.options || ['Đúng','Sai']).forEach((o, oi) => {
         const l=document.createElement('label'); l.className='opt';
@@ -543,14 +540,14 @@ function showExam() {
       });
     } else {
       const ta=document.createElement('textarea'); ta.rows=3; ta.placeholder=type==='short'?'Nhập câu trả lời ngắn':'Viết câu trả lời tự luận'; ta.style.width='100%'; d.appendChild(ta);
-      const submit=document.createElement('button'); submit.className='btn gray'; submit.textContent='Xem đáp án tham khảo'; submit.onclick=()=>{if(d.dataset.done)return;d.dataset.done='1';done++; const out=document.createElement('div');out.className='ex';out.innerHTML=(q.answerText?'<b>Đáp án tham khảo:</b> '+renderMd(q.answerText):'Đây là câu hỏi tự luận, không có đáp án chấm tự động.')+(q.explain?'<p>'+renderMd(q.explain)+'</p>':'');d.appendChild(out);submit.disabled=true;$('#score').innerHTML=`<p>Đã xem ${done}/${e.questions.length} câu</p>`;}; d.appendChild(submit);
+      const submit=document.createElement('button'); submit.className='btn gray'; submit.textContent='Xem đáp án tham khảo'; submit.onclick=()=>{if(d.dataset.done)return;d.dataset.done='1';done++; const out=document.createElement('div');out.className='ex';out.innerHTML=(q.answerText?'<b>Đáp án tham khảo:</b> '+renderMd(q.answerText):'Đây là câu hỏi tự luận, không có đáp án chấm tự động.')+(q.explain?'<p>'+renderMd(q.explain)+'</p>':'');{const sb=solBox(q);if(sb)out.append(sb);}d.appendChild(out);submit.disabled=true;$('#score').innerHTML=`<p>Đã xem ${done}/${e.questions.length} câu</p>`;}; d.appendChild(submit);
     }
     if (e.createdByUsername && user && e.createdByUsername === user.username) { const del=document.createElement('button');del.className='btn red';del.style.marginTop='8px';del.textContent='🗑️ Xóa đề của mình';del.onclick=async()=>{if(!confirm('Bạn có chắc muốn xóa đề này khỏi kho chung?'))return;try{const r=await fetch('/api/exams/'+encodeURIComponent(e.id),{method:'DELETE',headers:{Authorization:'Bearer '+token}});const d=await r.json();if(!r.ok)throw new Error(d.error);await loadBank();}catch(err){alert(err.message);}};box.appendChild(del);}
     box.appendChild(d);
   });
   function finishQuestion(d,q,e,qi,done,score){const ex=document.createElement('div');ex.className='ex';ex.innerHTML=(q.explain?'💡 '+renderMd(q.explain):'')+'<button class="btn gray" style="margin-top:6px">🤖 Nhờ AI giảng câu này</button>';ex.querySelector('button').onclick=()=>{$('#pop').classList.add('on');popChat.ask(`Hãy giảng cho mình câu này: ${q.q}
 Đáp án: ${(q.options||[]).join(' | ')}
-Đáp án đúng: ${(q.options||[])[q.answer]||q.answerText||'Tự luận'}`);};d.appendChild(ex);}
+Đáp án đúng: ${(q.options||[])[q.answer]||q.answerText||'Tự luận'}`);};const sb=solBox(q);if(sb)ex.insertBefore(sb,ex.querySelector('button'));d.appendChild(ex);}
 }
 $('#subj').onchange = fillExams; $('#exam').onchange = showExam; $('#reload').onclick = loadBank;
 loadBank();
@@ -606,6 +603,8 @@ function enter(u) {
   $('#out').onclick = logout;
   $('#name').value = u.name; $('#name').disabled = true;
   loadSettings();
+  const qp = new URLSearchParams(location.search);
+  if (qp.get('call') && qp.get('room')) setTimeout(() => enterRoom(qp.get('room')), 300); // vào thẳng cuộc gọi từ trang trò chuyện
 }
 (async () => {
   if (location.protocol === 'file:') {
@@ -637,16 +636,23 @@ $('#share').onclick = async e => {
 
 /* ---------- Thêm đề thủ công ---------- */
 let draftQuestions=[];
-let questionMedia=null;
-function showQuestionMedia(){const box=$('#questionMediaStatus');if(!questionMedia){box.innerHTML='<span>✨ Chưa có ảnh/video đính kèm. Bạn vẫn có thể chỉ nhập văn bản.</span>';return;}box.innerHTML='';const preview=document.createElement(questionMedia.mediaType==='video'?'video':'img');preview.src=questionMedia.localUrl||questionMedia.mediaUrl; if(questionMedia.mediaType==='video'){preview.controls=true;preview.playsInline=true;}else preview.alt='Xem trước ảnh câu hỏi';box.appendChild(preview);const label=document.createElement('span');label.textContent=questionMedia.fileName||'Đã chọn tệp';box.appendChild(label);const clear=document.createElement('button');clear.type='button';clear.className='clear-media';clear.textContent='✕ Bỏ tệp';clear.onclick=()=>{if(questionMedia.localUrl)URL.revokeObjectURL(questionMedia.localUrl);questionMedia=null;showQuestionMedia();};box.appendChild(clear);}
-function updateDraft(){ $('#draftList').innerHTML=draftQuestions.map((q,i)=>`<div class="q"><b>Câu ${i+1} (${q.type})</b><p>${esc(q.q||'(Câu hỏi bằng ảnh/video)')}</p>${q.mediaUrl?`<small>📎 Có ${q.mediaType==='video'?'video':'ảnh'} đính kèm</small>`:''}<button class="btn red" data-rm="${i}">✕ Xóa câu</button></div>`).join('');$('#draftList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{draftQuestions.splice(+b.dataset.rm,1);updateDraft();}); }
+let qMedia=[],sMedia=[];
+const QE='✨ Chưa có ảnh/video đính kèm. Có thể thêm nhiều ảnh cho một câu hỏi.',SE='Chưa có hình lời giải.';
+function renderMedia(list,box,empty){box.replaceChildren();if(!list.length){const s=document.createElement('span');s.textContent=empty;box.append(s);return}list.forEach((m,i)=>{const w=document.createElement('div');w.className='mthumb';const p=document.createElement(m.mediaType==='video'?'video':'img');p.src=m.localUrl;if(m.mediaType==='image'){p.style.cursor='zoom-in';p.onclick=()=>viewImg(m.localUrl)}if(m.mediaType==='video')p.muted=true;const x=document.createElement('button');x.type='button';x.className='clear-media';x.textContent='✕';x.title='Bỏ tệp này';x.onclick=()=>{URL.revokeObjectURL(m.localUrl);list.splice(i,1);renderMedia(list,box,empty)};w.append(p,x);box.append(w)});const n=document.createElement('span');n.textContent=list.length+' tệp';box.append(n)}
+function addMedia(list,box,empty,files,type,max){for(const f of files){if(list.length>=max){alert('Tối đa '+max+' tệp.');break}const v=type==='video';if(!f.type.startsWith(v?'video/':'image/')){alert(f.name+': không đúng định dạng.');continue}if(v&&f.size>8*1024*1024){alert('Video tối đa 8 MB.');continue}list.push({file:f,mediaType:type,name:f.name,localUrl:URL.createObjectURL(f)})}renderMedia(list,box,empty)}
+async function shrink(f){try{const bm=await createImageBitmap(f),sc=Math.min(1,1600/Math.max(bm.width,bm.height));if(sc===1&&f.size<1.5e6&&/jpeg|webp/.test(f.type))return f;const c=document.createElement('canvas');c.width=Math.round(bm.width*sc);c.height=Math.round(bm.height*sc);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/jpeg',.85))}catch{return f}}
+async function uploadMedia(m){if(m.url)return{url:m.url,type:m.mediaType};let b=m.file;if(m.mediaType==='image'&&b.type!=='image/gif')b=await shrink(b);const r=await api('/api/exam-media',{dataUrl:await fileToDataURL(b),mediaType:m.mediaType});const d=await r.json();if(!r.ok)throw new Error(d.error||'Không tải được ảnh/video');m.url=d.url;return{url:d.url,type:d.mediaType}}
+[['questionImageFile','image'],['questionCaptureImageFile','image'],['questionVideoFile','video'],['questionCaptureVideoFile','video']].forEach(([id,ty])=>$('#'+id).onchange=e=>{addMedia(qMedia,$('#questionMediaStatus'),QE,[...e.target.files],ty,12);e.target.value=''});
+['solImageFile','solCaptureFile'].forEach(id=>$('#'+id).onchange=e=>{addMedia(sMedia,$('#solMediaStatus'),SE,[...e.target.files],'image',12);e.target.value=''});
+$('#pickSolImage').onclick=()=>$('#solImageFile').click();$('#captureSolImage').onclick=()=>$('#solCaptureFile').click();
+function updateDraft(){ $('#draftList').innerHTML=draftQuestions.map((q,i)=>`<div class="q"><b>Câu ${i+1} (${q.type})</b><p>${esc(q.q||'(Câu hỏi bằng ảnh/video)')}</p>${q.media?.length?`<small>📎 ${q.media.length} ảnh/video câu hỏi</small> `:''}${q.explainMedia?.length?`<small>📷 ${q.explainMedia.length} hình lời giải</small>`:''}<br><button class="btn red" data-rm="${i}">✕ Xóa câu</button></div>`).join('');$('#draftList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{draftQuestions.splice(+b.dataset.rm,1);updateDraft();}); }
 function chooseQuestionMedia(input){input.click();}
-async function loadQuestionMedia(file, mediaType){if(!file)return;const isVideo=mediaType==='video';const max=isVideo?8*1024*1024:5*1024*1024;if(file.size>max){alert(isVideo?'Video tối đa 8 MB.':'Ảnh tối đa 5 MB.');return;}if(!file.type.startsWith(isVideo?'video/':'image/')){alert('Tệp không đúng định dạng.');return;}if(questionMedia?.localUrl)URL.revokeObjectURL(questionMedia.localUrl);questionMedia={file,mediaType,fileName:file.name,localUrl:URL.createObjectURL(file),mediaUrl:null};showQuestionMedia();}
 $('#pickQuestionImage').onclick=()=>chooseQuestionMedia($('#questionImageFile'));$('#captureQuestionImage').onclick=()=>chooseQuestionMedia($('#questionCaptureImageFile'));$('#pickQuestionVideo').onclick=()=>chooseQuestionMedia($('#questionVideoFile'));$('#captureQuestionVideo').onclick=()=>chooseQuestionMedia($('#questionCaptureVideoFile'));
-$('#questionImageFile').onchange=e=>loadQuestionMedia(e.target.files[0],'image');$('#questionCaptureImageFile').onchange=e=>loadQuestionMedia(e.target.files[0],'image');$('#questionVideoFile').onchange=e=>loadQuestionMedia(e.target.files[0],'video');$('#questionCaptureVideoFile').onchange=e=>loadQuestionMedia(e.target.files[0],'video');
-async function uploadQuestionMedia(){if(!questionMedia)return null;if(questionMedia.mediaUrl)return {mediaUrl:questionMedia.mediaUrl,mediaType:questionMedia.mediaType};const dataUrl=await fileToDataURL(questionMedia.file);const r=await api('/api/exam-media',{dataUrl,mediaType:questionMedia.mediaType});const d=await r.json();if(!r.ok)throw new Error(d.error||'Không tải được ảnh/video');questionMedia.mediaUrl=d.url;return {mediaUrl:d.url,mediaType:d.mediaType};}
-$('#qType').onchange=()=>{const t=$('#qType').value;$('#choiceFields').hidden=!(t==='choice'||t==='truefalse');$('#answerText').hidden=(t==='choice'||t==='truefalse'||t==='media');$('#qExplain').hidden=(t==='media');};
-$('#addQuestion').onclick=async()=>{const type=$('#qType').value,q={type,q:$('#qText').value.trim(),explain:type==='media'?'':$('#qExplain').value.trim()};if(!q.q&&!questionMedia)return alert('Nhập nội dung hoặc đính kèm ảnh/video cho câu hỏi.');if(type==='media'&&!questionMedia)return alert('Chế độ chỉ gửi ảnh/video cần đính kèm ít nhất một tệp.');if(type==='choice'){q.options=[$('#optA').value,$('#optB').value,$('#optC').value,$('#optD').value].filter(x=>x.trim());if(q.options.length<2)return alert('Trắc nghiệm cần ít nhất 2 đáp án.');q.answer=+$('#qAnswer').value;if(q.answer>=q.options.length)return alert('Chọn đáp án đúng đang có trong danh sách.');}else if(type==='truefalse'){q.options=['Đúng','Sai'];q.answer=+$('#qAnswer').value;}else if(type!=='media')q.answerText=$('#answerText').value.trim();try{const media=await uploadQuestionMedia();if(media)Object.assign(q,media);}catch(err){alert(err.message);return;}draftQuestions.push(q);$('#qText').value='';$('#qExplain').value='';['optA','optB','optC','optD','answerText'].forEach(id=>$('#'+id).value='');if(questionMedia?.localUrl)URL.revokeObjectURL(questionMedia.localUrl);questionMedia=null;showQuestionMedia();['questionImageFile','questionCaptureImageFile','questionVideoFile','questionCaptureVideoFile'].forEach(id=>$('#'+id).value='');updateDraft();};
+$('#qType').onchange=()=>{const t=$('#qType').value;$('#choiceFields').hidden=!(t==='choice'||t==='truefalse');$('#answerText').hidden=(t==='choice'||t==='truefalse'||t==='media');};
+$('#addQuestion').onclick=async()=>{const btn=$('#addQuestion'),type=$('#qType').value,q={type,q:$('#qText').value.trim(),explain:$('#qExplain').value.trim()};if(!q.q&&!qMedia.length)return alert('Nhập nội dung hoặc đính kèm ảnh/video cho câu hỏi.');if(type==='media'&&!qMedia.length)return alert('Chế độ chỉ gửi ảnh/video cần đính kèm ít nhất một tệp.');if(type==='choice'){q.options=[$('#optA').value,$('#optB').value,$('#optC').value,$('#optD').value].filter(x=>x.trim());if(q.options.length<2)return alert('Trắc nghiệm cần ít nhất 2 đáp án.');q.answer=+$('#qAnswer').value;if(q.answer>=q.options.length)return alert('Chọn đáp án đúng đang có trong danh sách.');}else if(type==='truefalse'){q.options=['Đúng','Sai'];q.answer=+$('#qAnswer').value;}else if(type!=='media')q.answerText=$('#answerText').value.trim();
+ btn.disabled=true;const old=btn.textContent;btn.textContent='⏳ Đang tải ảnh lên...';
+ try{const a=[];for(const m of qMedia)a.push(await uploadMedia(m));if(a.length)q.media=a;const b=[];for(const m of sMedia)b.push(await uploadMedia(m));if(b.length)q.explainMedia=b;}catch(err){alert(err.message);btn.disabled=false;btn.textContent=old;return;}
+ draftQuestions.push(q);$('#qText').value='';$('#qExplain').value='';['optA','optB','optC','optD','answerText'].forEach(id=>$('#'+id).value='');qMedia.forEach(m=>URL.revokeObjectURL(m.localUrl));sMedia.forEach(m=>URL.revokeObjectURL(m.localUrl));qMedia=[];sMedia=[];renderMedia(qMedia,$('#questionMediaStatus'),QE);renderMedia(sMedia,$('#solMediaStatus'),SE);btn.disabled=false;btn.textContent=old;updateDraft();};
 $('#addExam').onclick=async()=>{const msg=$('#mMsg');msg.textContent='⏳ Đang lưu...';try{const subject=$('#mSubj').value.trim(),title=$('#mTitle').value.trim();if(!subject||!title)throw new Error('Nhập môn học và tên đề');if(!draftQuestions.length)throw new Error('Hãy thêm ít nhất một câu vào bản nháp');const r=await api('/api/exams',{subject,exam:{title,questions:draftQuestions}});const d=await r.json();if(!r.ok)throw new Error(d.error);msg.textContent=`✅ Đã thêm “${d.title}” (${d.count} câu)`;draftQuestions=[];updateDraft();await loadBank();}catch(e){msg.textContent='⚠️ '+e.message;}};
 $('#parseImage').onclick=async()=>{const file=$('#examImage').files[0],subject=$('#mSubj').value.trim(),title=$('#mTitle').value.trim();if(!file)return alert('Chọn hoặc chụp ảnh đề trước.');if(!subject)return alert('Nhập môn học trước.');if(file.size>7*1024*1024)return alert('Ảnh quá lớn, hãy chọn ảnh dưới 7 MB.');const msg=$('#mMsg');msg.textContent='⏳ AI đang đọc ảnh và thêm đề...';try{const image=await fileToDataURL(file);const r=await api('/api/exams/from-image',{subject,title,image});const d=await r.json();if(!r.ok)throw new Error(d.error);msg.textContent=`✅ Đã nhận dạng và thêm “${d.title}” (${d.count} câu). Hãy kiểm tra nội dung.`;await loadBank();$('#examImage').value='';}catch(e){msg.textContent='⚠️ '+e.message;}};
 
@@ -663,108 +669,8 @@ $('#gen').onclick = async () => {
   b.disabled = false;
 };
 
-/* ---------- Bạn bè và tin nhắn ---------- */
-let socialState = null, activeFriend = null, activeMessagesKey = '', socialFile = null, socialPollBusy = false;
-function socialNotice(message) { const box = $('#friendSearchResults'); if (box) box.textContent = message; }
-function safeTime(ts) { try { return new Date(ts).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}); } catch { return ''; } }
-async function socialFetch(url, options={}) {
-  const headers = { Authorization:'Bearer '+token, ...(options.headers||{}) };
-  const r = await fetch(url,{...options,headers});
-  const d = await r.json().catch(()=>({error:'Phản hồi máy chủ không hợp lệ'}));
-  if (!r.ok) throw new Error(d.error||'Có lỗi xảy ra');
-  return d;
-}
-function personCard(u, buttonLabel, action, extra='') {
-  const el=document.createElement('div');el.className='social-person';
-  const info=document.createElement('div');info.className='person-info';
-  const strong=document.createElement('strong');strong.textContent=u.name||u.username;info.appendChild(strong);
-  const small=document.createElement('small');small.textContent=(u.id||'')+' · @'+(u.username||'');info.appendChild(small);el.appendChild(info);
-  if(buttonLabel){const b=document.createElement('button');b.className='btn '+(extra||'gray');b.textContent=buttonLabel;b.onclick=()=>action(u);el.appendChild(b);}
-  return el;
-}
-async function loadSocial() {
-  if(!token)return;
-  const d=await socialFetch('/api/social');socialState=d;
-  $('#mySocialId').textContent=d.me.id||'Chưa có ID';
-  $('#friendList').replaceChildren();
-  if(!d.friends.length) $('#friendList').innerHTML='<small style="color:#6b7280">Chưa có bạn bè.</small>';
-  d.friends.forEach(u=>$('#friendList').appendChild(personCard(u,'Nhắn tin',()=>selectSocialFriend(u),'btn')));
-  $('#friendRequests').replaceChildren();
-  if(!d.incoming.length) $('#friendRequests').innerHTML='<small style="color:#6b7280">Không có lời mời mới.</small>';
-  d.incoming.forEach(r=>{
-    const el=personCard(r.user,'',null);const actions=document.createElement('div');actions.className='row';
-    for(const [label,accept] of [['Đồng ý',true],['Từ chối',false]]){const b=document.createElement('button');b.className='btn '+(accept?'':'gray');b.textContent=label;b.onclick=async()=>{try{await socialFetch('/api/friends/respond',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:r.id,accept})});await loadSocial();}catch(e){alert(e.message);}};actions.appendChild(b);}
-    el.appendChild(actions);$('#friendRequests').appendChild(el);
-  });
-  $('#conversationList').replaceChildren();
-  if(!d.conversations.length) $('#conversationList').innerHTML='<small style="color:#6b7280">Chưa có cuộc trò chuyện.</small>';
-  d.conversations.forEach(c=>{const el=personCard(c.user,'Mở',()=>selectSocialFriend(c.user),'gray');const sm=document.createElement('small');sm.textContent=c.lastMessage+' · '+safeTime(c.createdAt);el.querySelector('.person-info').appendChild(sm);$('#conversationList').appendChild(el);});
-  if(activeFriend && d.friends.some(u=>u.username===activeFriend.username)) await loadSocialMessages(false);
-}
-$('#copyMyId').onclick=()=>{if(!socialState?.me?.id)return; navigator.clipboard?.writeText(socialState.me.id).then(()=>alert('Đã sao chép ID '+socialState.me.id)).catch(()=>prompt('Sao chép ID này:',socialState.me.id));};
-$('#searchFriend').onclick=async()=>{
-  const q=$('#friendSearch').value.trim(),box=$('#friendSearchResults');box.replaceChildren();
-  if(q.length<2){box.textContent='Nhập ít nhất 2 ký tự để tìm.';return;}
-  try{const d=await socialFetch('/api/users/search?q='+encodeURIComponent(q));if(!d.users.length){box.textContent='Không tìm thấy người dùng.';return;}
-    d.users.forEach(u=>box.appendChild(personCard(u,'Kết bạn',async target=>{try{const r=await socialFetch('/api/friends/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:target.id})});alert(r.message);await loadSocial();}catch(e){alert(e.message);}},'btn')));
-  }catch(e){box.textContent='⚠️ '+e.message;}
-};
-$('#friendSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#searchFriend').click();}});
-$('#refreshSocial').onclick=()=>loadSocial().catch(e=>alert(e.message));
-async function selectSocialFriend(u) {
-  activeFriend=u;activeMessagesKey='';
-  $('#chatTitle').textContent=u.name||u.username;$('#chatSub').textContent=(u.id||'')+' · @'+u.username;
-  $('#socialText').disabled=false;$('#sendSocial').disabled=false;$('#attachSocial').disabled=false;
-  await loadSocialMessages(true);
-}
-async function loadSocialMessages(force) {
-  if(!activeFriend||socialPollBusy)return;
-  socialPollBusy=true;
-  try{
-    const d=await socialFetch('/api/messages/'+encodeURIComponent(activeFriend.username));
-    const key=d.messages.map(m=>m.id).join('|');
-    if(force||key!==activeMessagesKey){
-      activeMessagesKey=key;const root=$('#socialMessages');root.replaceChildren();
-      if(!d.messages.length){root.innerHTML='<div class="social-empty">Chưa có tin nhắn. Hãy gửi lời chào đầu tiên 👋</div>';}
-      d.messages.forEach(m=>{
-        const mine=m.from===socialState?.me?.username;const b=document.createElement('div');b.className='social-bubble '+(mine?'mine':'theirs');
-        if(m.text){const t=document.createElement('div');t.textContent=m.text;b.appendChild(t);}
-        if(m.attachment){const a=document.createElement('button');a.className='social-attachment';a.textContent=(m.attachment.image?'🖼️ ':'📎 ')+m.attachment.name+' ('+(m.attachment.size/1024).toFixed(0)+' KB)';a.onclick=()=>openSocialFile(m.attachment);b.appendChild(a);}
-        const time=document.createElement('small');time.textContent=safeTime(m.createdAt);b.appendChild(time);root.appendChild(b);
-      });
-      root.scrollTop=root.scrollHeight;
-    }
-  }catch(e){if(e.message.includes('Chỉ bạn bè')){activeFriend=null;$('#chatTitle').textContent='Chọn một người bạn';$('#chatSub').textContent='';$('#socialMessages').textContent=e.message;}}
-  finally{socialPollBusy=false;}
-}
-async function openSocialFile(f){
-  try{const r=await fetch('/api/files/'+encodeURIComponent(f.id),{headers:{Authorization:'Bearer '+token}});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||'Không tải được tệp');}
-    const blob=await r.blob(),url=URL.createObjectURL(blob);
-    if(f.image){const w=window.open(url,'_blank','noopener');if(!w){const a=document.createElement('a');a.href=url;a.download=f.name;a.click();}}
-    else{const a=document.createElement('a');a.href=url;a.download=f.name;document.body.appendChild(a);a.click();a.remove();}
-    setTimeout(()=>URL.revokeObjectURL(url),60000);
-  }catch(e){alert(e.message);}
-}
-function resetSocialFile(){socialFile=null;$('#socialFile').value='';$('#socialFileName').textContent='';}
-$('#attachSocial').onclick=()=>$('#socialFile').click();
-$('#socialFile').onchange=()=>{const f=$('#socialFile').files[0];if(!f){resetSocialFile();return;}if(f.size>8*1024*1024){alert('Tệp tối đa 8 MB.');resetSocialFile();return;}socialFile=f;$('#socialFileName').textContent=f.name;};
-async function sendSocialMessage(){
-  if(!activeFriend)return;
-  const text=$('#socialText').value.trim();if(!text&&!socialFile)return;
-  const b=$('#sendSocial');b.disabled=true;
-  try{
-    let file=null;
-    if(socialFile)file={name:socialFile.name,mime:socialFile.type||'application/octet-stream',data:await fileToDataURL(socialFile)};
-    await socialFetch('/api/messages/'+encodeURIComponent(activeFriend.username),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,file})});
-    $('#socialText').value='';resetSocialFile();activeMessagesKey='';await loadSocialMessages(true);await loadSocial();
-  }catch(e){alert(e.message);}
-  finally{b.disabled=!activeFriend;}
-}
-$('#sendSocial').onclick=sendSocialMessage;
-$('#socialText').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendSocialMessage();}});
-setInterval(()=>{if($('#social')?.classList.contains('on')&&token){loadSocial().catch(()=>{});}},10000);
-setInterval(()=>{if($('#social')?.classList.contains('on')&&activeFriend&&token)loadSocialMessages(false);},3000);
-
+/* ---------- Trò chuyện: mở trang riêng (chat.html) ---------- */
+$('#openChat').onclick = () => { if (matchMedia('(max-width:860px)').matches) location.href = '/chat.html'; else window.open('/chat.html', 'hoc_chat'); };
 </script>
 </body>
 </html>

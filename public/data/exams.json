@@ -103,6 +103,55 @@
           ]
         }
       ]
+    },
+    {
+      "name": "tons",
+      "exams": []
+    },
+    {
+      "name": "fd",
+      "exams": [
+        {
+          "id": "e30d4f2a-386d-41d1-9353-b6aa47b25c69",
+          "title": "df",
+          "questions": [
+            {
+              "type": "media",
+              "q": "dffefe",
+              "explain": "",
+              "media": [
+                {
+                  "url": "/data/exam-media/f5212b27-60b8-4341-a13e-e16f2600977f.jpg",
+                  "type": "image"
+                },
+                {
+                  "url": "/data/exam-media/69f9e29c-dc9a-4df4-a359-fcf8593f7e1a.jpg",
+                  "type": "image"
+                },
+                {
+                  "url": "/data/exam-media/59deafb5-8cf0-4e13-b8e6-e471910d3e8f.jpg",
+                  "type": "image"
+                }
+              ],
+              "mediaUrl": "/data/exam-media/f5212b27-60b8-4341-a13e-e16f2600977f.jpg",
+              "mediaType": "image",
+              "explainMedia": [
+                {
+                  "url": "/data/exam-media/59e26ff7-27df-4cc3-831d-b45f06fcd3a4.jpg",
+                  "type": "image"
+                },
+                {
+                  "url": "/data/exam-media/113526d2-9511-4bc0-b82c-d25bdce3c104.jpg",
+                  "type": "image"
+                }
+              ]
+            }
+          ],
+          "createdBy": "phuc",
+          "createdByUsername": "phuchuynh",
+          "createdAt": 1791767894262
+        }
+      ]
     }
   ]
 }
