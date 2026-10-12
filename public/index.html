@@ -497,13 +497,29 @@ const pr = new URLSearchParams(location.search).get('room'); if (pr) $('#code').
 /* ---------- Kho đề (đọc từ data/exams.json) ---------- */
 let bank = { subjects: [] };
 async function loadBank() {
-  bank = await (await fetch('data/exams.json?t=' + Date.now())).json();
-  $('#subj').innerHTML = bank.subjects.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
-  fillExams();
+  try {
+    bank = await (await fetch('data/exams.json?t=' + Date.now(), { cache: 'no-store' })).json();
+    // Ẩn các môn học cũ còn sót lại nhưng không có đề.
+    bank.subjects = (bank.subjects || []).filter(s => Array.isArray(s.exams) && s.exams.length > 0);
+    const subj = $('#subj');
+    subj.innerHTML = bank.subjects.map((s, i) => `<option value="${i}">${esc(s.name)}</option>`).join('');
+    if (!bank.subjects.length) {
+      $('#exam').innerHTML = '';
+      $('#quiz').textContent = 'Kho đề hiện chưa có đề nào.';
+      return;
+    }
+    fillExams();
+  } catch (err) {
+    $('#quiz').textContent = 'Không tải được kho đề. Hãy thử tải lại.';
+  }
 }
 function fillExams() {
-  const s = bank.subjects[$('#subj').value] || { exams: [] };
-  $('#exam').innerHTML = s.exams.map((e, i) => `<option value="${i}">${e.title}</option>`).join('');
+  const s = bank.subjects[Number($('#subj').value)] || { exams: [] };
+  $('#exam').innerHTML = (s.exams || []).map((e, i) => `<option value="${i}">${esc(e.title)}</option>`).join('');
+  if (!s.exams || !s.exams.length) {
+    $('#quiz').textContent = 'Môn học này hiện chưa có đề nào.';
+    return;
+  }
   showExam();
 }
 function viewImg(u) { const b = document.getElementById('imgLb'); b.querySelector('img').src = u; b.style.display = 'flex'; }

@@ -462,7 +462,12 @@ app.delete('/api/exams/:id', auth, (req, res) => {
     if (idx >= 0) {
       const exam = sub.exams[idx];
       if (!exam.createdByUsername || exam.createdByUsername !== req.user.username) return res.status(403).json({ error: 'Bạn chỉ có thể xóa đề do chính mình đăng.' });
-      sub.exams.splice(idx, 1); writeExamDB(db);
+      sub.exams.splice(idx, 1);
+      // Xóa môn học khỏi danh sách nếu không còn đề nào, tránh hiện tiêu đề rỗng.
+      if (sub.exams.length === 0) {
+        db.subjects = db.subjects.filter(item => item !== sub);
+      }
+      writeExamDB(db);
       return res.json({ ok: true });
     }
   }

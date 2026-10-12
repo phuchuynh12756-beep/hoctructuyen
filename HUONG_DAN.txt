@@ -1,0 +1,14 @@
+CẬP NHẬT LỖI TIÊU ĐỀ MÔN HỌC/ĐỀ CŨ VẪN HIỆN SAU KHI XÓA
+
+1. Sao lưu dự án hiện tại.
+2. Chép server.js vào thư mục gốc, ghi đè file cũ.
+3. Chép public/index.html vào thư mục public, ghi đè file cũ.
+4. Chạy thử local bằng `node server.js`.
+5. Nếu ổn, đưa hai file lên GitHub để Render deploy lại.
+
+Bản sửa:
+- Khi xóa đề cuối cùng của một môn, máy chủ xóa luôn môn trống khỏi danh sách.
+- Giao diện lọc các môn không có đề (kể cả dữ liệu cũ còn sót), không hiển thị tiêu đề rỗng.
+- Nếu kho không còn đề, hiện thông báo thay vì một tiêu đề bấm vào nhưng không có nội dung.
+
+Không có .env hoặc dữ liệu tài khoản trong gói này.
