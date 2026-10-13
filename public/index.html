@@ -569,16 +569,53 @@ const grid = $('#grid');
 
 function tile(id, stream, label) {
   let t = document.getElementById('t_' + id);
-  if (!t) { t = document.createElement('div'); t.className = 'tile'; t.id = 't_' + id; t.innerHTML = '<video autoplay playsinline></video><span></span>'; grid.appendChild(t); }
-  const v = t.querySelector('video'); if (v.srcObject !== stream) v.srcObject = stream;
-  if (id === 'me') v.muted = true;
+  if (!t) {
+    t = document.createElement('div');
+    t.className = 'tile';
+    t.id = 't_' + id;
+    t.innerHTML = '<video autoplay playsinline></video><span></span>';
+    grid.appendChild(t);
+  }
+  const v = t.querySelector('video');
+  if (stream && v.srcObject !== stream) v.srcObject = stream;
+  v.autoplay = true;
+  v.playsInline = true;
+  v.muted = id === 'me';
   t.querySelector('span').textContent = label;
+  if (id !== 'me') {
+    const play = v.play();
+    if (play && typeof play.catch === 'function') play.catch(() => {
+      t.querySelector('span').textContent = label + ' (nhấn vào video để phát)';
+    });
+    v.onclick = () => v.play().catch(() => {});
+  }
 }
 function makePeer(id, name) {
-  const pc = new RTCPeerConnection(ICE); peers[id] = pc;
-  local.getTracks().forEach(t => pc.addTrack(t, local));
-  pc.onicecandidate = e => e.candidate && socket.emit('signal', { to: id, data: { candidate: e.candidate } });
-  pc.ontrack = e => tile(id, e.streams[0], name || 'Bạn học');
+  const pc = new RTCPeerConnection(ICE);
+  peers[id] = pc;
+  const remoteStream = new MediaStream();
+  // Tạo tile từ đầu để dễ nhận biết trạng thái kết nối.
+  tile(id, remoteStream, name || 'Bạn học');
+  local.getTracks().forEach(track => pc.addTrack(track, local));
+  pc.onicecandidate = e => {
+    if (e.candidate) socket.emit('signal', { to: id, data: { candidate: e.candidate } });
+  };
+  pc.ontrack = e => {
+    const stream = e.streams && e.streams[0];
+    if (stream) {
+      tile(id, stream, name || 'Bạn học');
+    } else {
+      if (!remoteStream.getTracks().some(track => track.id === e.track.id)) remoteStream.addTrack(e.track);
+      tile(id, remoteStream, name || 'Bạn học');
+    }
+  };
+  pc.onconnectionstatechange = () => {
+    const t = document.getElementById('t_' + id);
+    if (!t) return;
+    const label = t.querySelector('span');
+    if (pc.connectionState === 'failed') label.textContent = (name || 'Bạn học') + ' (kết nối lỗi; mạng có thể cần TURN)';
+    else if (pc.connectionState === 'disconnected') label.textContent = (name || 'Bạn học') + ' (mất kết nối...)';
+  };
   return pc;
 }
 async function enterRoom(code) {
@@ -591,12 +628,31 @@ async function enterRoom(code) {
   socket.on('connect', () => socket.emit('join', code));
   socket.on('connect_error', () => { alert('Phiên đăng nhập hết hạn'); logout(); });
   socket.on('peers', async list => { for (const { id, name } of list) { const pc = makePeer(id, name); const o = await pc.createOffer(); await pc.setLocalDescription(o); socket.emit('signal', { to: id, data: { sdp: pc.localDescription } }); } });
+  const pendingCandidates = {};
   socket.on('signal', async ({ from, name, data }) => {
-    const pc = peers[from] || makePeer(from, name);
-    if (data.sdp) {
-      await pc.setRemoteDescription(data.sdp);
-      if (data.sdp.type === 'offer') { const a = await pc.createAnswer(); await pc.setLocalDescription(a); socket.emit('signal', { to: from, data: { sdp: pc.localDescription } }); }
-    } else if (data.candidate) pc.addIceCandidate(data.candidate).catch(() => {});
+    try {
+      const pc = peers[from] || makePeer(from, name);
+      if (data.sdp) {
+        await pc.setRemoteDescription(data.sdp);
+        for (const candidate of (pendingCandidates[from] || [])) {
+          try { await pc.addIceCandidate(candidate); } catch (e) { console.warn('Không thêm được ICE candidate:', e); }
+        }
+        delete pendingCandidates[from];
+        if (data.sdp.type === 'offer') {
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit('signal', { to: from, data: { sdp: pc.localDescription } });
+        }
+      } else if (data.candidate) {
+        if (pc.remoteDescription && pc.remoteDescription.type) {
+          await pc.addIceCandidate(data.candidate);
+        } else {
+          (pendingCandidates[from] ||= []).push(data.candidate);
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi thiết lập cuộc gọi WebRTC:', err);
+    }
   });
   socket.on('peer-left', id => { peers[id]?.close(); delete peers[id]; document.getElementById('t_' + id)?.remove(); });
   $('#lobby').style.display = 'none'; $('#ctrl').style.display = 'flex'; $('#hint').style.display = 'none';
