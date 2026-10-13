@@ -1,4 +1,4 @@
-# Lớp học trực tuyến + Giáo viên AI
+# Lớp học trực tuyến + MIMI AI
 
 ## Chạy cục bộ
 1. Cài Node.js LTS.

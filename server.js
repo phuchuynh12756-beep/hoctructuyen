@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS = {
   bgColor: '#f4f6fb',
   accent: '#4f46e5',
   fontScale: 1,
-  teacherName: 'Giáo viên AI',
+  teacherName: 'MIMI AI',
   personality: 'than-thien',
   address: 'minh-ban',
   responseLength: 'vua',
@@ -94,6 +94,7 @@ function buildSystem(settings) {
   return `Bạn là ${s.teacherName}, một giáo viên AI có phương pháp sư phạm tốt. Phong cách: ${personality}. ${address}. Hãy ${length}; ${style}.
 Hãy ưu tiên tính chính xác, nói rõ khi đề bài thiếu dữ kiện hoặc có nhiều cách hiểu. Không bịa nguồn hay dữ kiện. ${s.checkUnderstanding ? 'Sau mỗi phần quan trọng, có thể đặt 1 câu hỏi kiểm tra ngắn nếu phù hợp.' : 'Không tự động đặt câu hỏi kiểm tra sau mỗi phần.'} ${s.emojis ? 'Có thể dùng emoji vừa phải khi giúp giao tiếp dễ gần.' : 'Không dùng emoji trừ khi người học yêu cầu.'}
 ${s.latex ? 'Công thức toán/lý/hóa phải viết bằng LaTeX, dùng $...$ hoặc $$...$$.' : 'Có thể viết công thức bằng văn bản dễ đọc, không bắt buộc LaTeX.'}
+Thông tin về người tạo website: Nếu người dùng hỏi “trang web này do ai tạo ra?”, “ai làm ra website này?”, “ai là tác giả/người phát triển trang web?” hoặc câu hỏi tương tự, hãy trả lời tự nhiên rằng: “Trang web học tập này do Phúc Huỳnh tạo ra nhằm phục vụ mục đích học tập, hỗ trợ ôn luyện kiến thức và giúp học sinh học tập thuận tiện hơn. MIMI AI là trợ lý giáo viên AI được tích hợp trên website.” Có thể diễn đạt lại cho phù hợp ngữ cảnh nhưng phải giữ đúng ý chính, không tự bịa thêm thông tin về thời gian, tổ chức hay đội ngũ phát triển. Nếu được hỏi riêng ai tạo ra MIMI AI, hãy nói website do Phúc Huỳnh xây dựng và MIMI AI là trợ lý AI tích hợp trên đó; không khẳng định Phúc Huỳnh tự huấn luyện mô hình AI nền tảng.
 Trả lời bằng Markdown khi phù hợp.`;
 }
 
@@ -517,6 +518,37 @@ app.post('/api/generate-exam', auth, async (req, res) => {
     res.json({ ok: true, id: exam.id, title: exam.title, count: exam.questions.length });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+/* ---------- Xóa tài khoản (cần nhập lại mật khẩu) ---------- */
+app.post('/api/account/delete', auth, wrap((req, res) => {
+  const me = req.user.username, key = req.ip + '|del|' + me, users = loadUsers(), u = users[me];
+  if (tooMany(key)) throw err(429, 'Sai quá nhiều lần, thử lại sau 10 phút.');
+  let ok = false;
+  try { ok = !!u && crypto.timingSafeEqual(Buffer.from(hash(String(req.body.password || ''), u.salt), 'hex'), Buffer.from(u.hash, 'hex')); } catch {}
+  if (!ok) { fail(key); throw err(403, 'Mật khẩu không đúng.'); } // 403 (không phải 401) để giao diện không tự đăng xuất
+  const rmFile = a => a && fs.rmSync(path.join(UPLOAD_DIR, a.id + '.' + a.ext), { force: true });
+  const db = readSocial(), touched = new Set();
+  db.friendships = db.friendships.filter(f => { if (f.a !== me && f.b !== me) return true; touched.add(f.a === me ? f.b : f.a); return false; });
+  db.requests = db.requests.filter(r => { if (r.from !== me && r.to !== me) return true; touched.add(r.from === me ? r.to : r.from); return false; });
+  db.messages = db.messages.filter(m => { const mine = m.from === me || m.to === me; if (mine) rmFile(m.attachment); return !mine; });
+  for (const g of db.groups) if (g.members.includes(me)) { g.members.forEach(x => x !== me && touched.add(x)); g.members = g.members.filter(x => x !== me); if (g.owner === me) g.owner = g.members[0]; }
+  for (const g of db.groups.filter(g => !g.members.length)) { db.messages.filter(m => m.groupId === g.id).forEach(m => rmFile(m.attachment)); db.messages = db.messages.filter(m => m.groupId !== g.id); }
+  db.groups = db.groups.filter(g => g.members.length);
+  writeSocial(db);
+  // Đề đã đăng: xóa theo lựa chọn; nếu giữ lại thì gỡ quyền sở hữu để người đăng ký trùng tên sau này không thừa hưởng quyền sửa/xóa.
+  const exams = readExamDB(), mediaOf = e => e.questions.flatMap(q => [...(q.media || []), ...(q.explainMedia || [])]).map(m => m.url);
+  for (const sub of exams.subjects) sub.exams = (sub.exams || []).filter(e => {
+    if (e.createdByUsername !== me) return true;
+    if (req.body.deleteExams === true) { mediaOf(e).forEach(url => fs.rmSync(path.join(EXAM_MEDIA_DIR, path.basename(String(url))), { force: true })); return false; }
+    e.createdByUsername = null; e.createdBy = 'Tài khoản đã xóa'; return true;
+  });
+  exams.subjects = exams.subjects.filter(sub => sub.exams.length);
+  writeExamDB(exams);
+  delete users[me]; saveUsers(users);
+  io.in('user:' + me).disconnectSockets(true);
+  notify([...touched], null);
+  res.json({ ok: true });
+}));
 
 /* ---------- Tín hiệu WebRTC (chỉ người đã đăng nhập) ---------- */
 io.use((s, next) => {

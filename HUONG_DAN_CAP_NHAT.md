@@ -2,7 +2,7 @@
 
 ## Các file trong gói
 - `server.js`: API ID tài khoản, tìm người dùng, kết bạn, tin nhắn và gửi tệp.
-- `public/index.html`: giao diện mới cho toàn bộ web, gồm lớp học, giáo viên AI, kho đề, cài đặt và chat responsive.
+- `public/index.html`: giao diện mới cho toàn bộ web, gồm lớp học, MIMI AI, kho đề, cài đặt và chat responsive.
 - `.gitignore`: bỏ qua dữ liệu tin nhắn và tệp tải lên.
 - Không có `.env`, API key, `data/users.json` hoặc `data/secret.txt` trong gói này.
 
